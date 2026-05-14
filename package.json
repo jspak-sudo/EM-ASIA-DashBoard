@@ -5,9 +5,11 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:client": "cd client && npm run dev",
-    "dev:server": "cd server && npm run dev"
+    "dev:server": "cd server && npm run dev",
+    "snapshot": "tsx scripts/snapshot.ts"
   },
   "devDependencies": {
-    "concurrently": "^9.0.0"
+    "concurrently": "^9.0.0",
+    "tsx": "^4.21.0"
   }
 }
