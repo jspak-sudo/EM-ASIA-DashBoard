@@ -130,7 +130,7 @@ async function main() {
    SNAPSHOT: ${now} KST
    이 파일은 자동 생성됩니다. 직접 수정하지 마세요.
 ═══════════════════════════════════════════════════ */
-window.__SNAPSHOT__ = ${JSON.stringify(snap)};
+window.__SNAPSHOT__ = ${JSON.stringify(snap).replace(/<\/script>/gi, '<\\/script>').replace(/<!--/g, '<\\!--')};
 window.__SNAPSHOT_TIME__ = '${now}';
 
 (function() {
