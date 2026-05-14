@@ -1,0 +1,2684 @@
+[
+  {
+    "itemcode": "360750",
+    "name": "TIGER 미국S&P500",
+    "categoryKey": "us",
+    "marketSum": 163056
+  },
+  {
+    "itemcode": "133690",
+    "name": "TIGER 미국나스닥100",
+    "categoryKey": "us",
+    "marketSum": 89651
+  },
+  {
+    "itemcode": "379800",
+    "name": "KODEX 미국S&P500",
+    "categoryKey": "us",
+    "marketSum": 85938
+  },
+  {
+    "itemcode": "379810",
+    "name": "KODEX 미국나스닥100",
+    "categoryKey": "us",
+    "marketSum": 67082
+  },
+  {
+    "itemcode": "381180",
+    "name": "TIGER 미국필라델피아반도체나스닥",
+    "categoryKey": "semi",
+    "marketSum": 44687
+  },
+  {
+    "itemcode": "381170",
+    "name": "TIGER 미국테크TOP10 INDXX",
+    "categoryKey": "it_global",
+    "marketSum": 41600
+  },
+  {
+    "itemcode": "360200",
+    "name": "ACE 미국S&P500",
+    "categoryKey": "us",
+    "marketSum": 36030
+  },
+  {
+    "itemcode": "458730",
+    "name": "TIGER 미국배당다우존스",
+    "categoryKey": "dividend",
+    "marketSum": 33595
+  },
+  {
+    "itemcode": "367380",
+    "name": "ACE 미국나스닥100",
+    "categoryKey": "us",
+    "marketSum": 29992
+  },
+  {
+    "itemcode": "453850",
+    "name": "ACE 미국30년국채액티브(H)",
+    "categoryKey": "bond_kr",
+    "marketSum": 18236
+  },
+  {
+    "itemcode": "487230",
+    "name": "KODEX 미국AI전력핵심인프라",
+    "categoryKey": "power_infra",
+    "marketSum": 16906
+  },
+  {
+    "itemcode": "284430",
+    "name": "KODEX 200미국채혼합",
+    "categoryKey": "mixed",
+    "marketSum": 16599
+  },
+  {
+    "itemcode": "441640",
+    "name": "KODEX 미국배당커버드콜액티브",
+    "categoryKey": "coveredcall",
+    "marketSum": 15594
+  },
+  {
+    "itemcode": "379780",
+    "name": "RISE 미국S&P500",
+    "categoryKey": "us",
+    "marketSum": 14160
+  },
+  {
+    "itemcode": "486290",
+    "name": "TIGER 미국나스닥100타겟데일리커버드콜",
+    "categoryKey": "coveredcall",
+    "marketSum": 13919
+  },
+  {
+    "itemcode": "368590",
+    "name": "RISE 미국나스닥100",
+    "categoryKey": "us",
+    "marketSum": 13724
+  },
+  {
+    "itemcode": "371460",
+    "name": "TIGER 차이나전기차SOLACTIVE",
+    "categoryKey": "auto",
+    "marketSum": 12970
+  },
+  {
+    "itemcode": "446770",
+    "name": "ACE 글로벌반도체TOP4 Plus",
+    "categoryKey": "semi",
+    "marketSum": 12314
+  },
+  {
+    "itemcode": "465580",
+    "name": "ACE 미국빅테크TOP7 Plus",
+    "categoryKey": "it_global",
+    "marketSum": 11288
+  },
+  {
+    "itemcode": "476550",
+    "name": "TIGER 미국30년국채커버드콜액티브(H)",
+    "categoryKey": "coveredcall",
+    "marketSum": 10571
+  },
+  {
+    "itemcode": "497570",
+    "name": "TIGER 미국필라델피아AI반도체나스닥",
+    "categoryKey": "semi",
+    "marketSum": 10173
+  },
+  {
+    "itemcode": "438080",
+    "name": "ACE 미국S&P500미국채혼합50액티브",
+    "categoryKey": "mixed",
+    "marketSum": 9885
+  },
+  {
+    "itemcode": "390390",
+    "name": "KODEX 미국반도체",
+    "categoryKey": "semi",
+    "marketSum": 9878
+  },
+  {
+    "itemcode": "446720",
+    "name": "SOL 미국배당다우존스",
+    "categoryKey": "dividend",
+    "marketSum": 9299
+  },
+  {
+    "itemcode": "481060",
+    "name": "KODEX 미국30년국채타겟커버드콜(합성 H)",
+    "categoryKey": "coveredcall",
+    "marketSum": 8742
+  },
+  {
+    "itemcode": "371160",
+    "name": "TIGER 차이나항셍테크",
+    "categoryKey": "china",
+    "marketSum": 8633
+  },
+  {
+    "itemcode": "449180",
+    "name": "KODEX 미국S&P500(H)",
+    "categoryKey": "us",
+    "marketSum": 8453
+  },
+  {
+    "itemcode": "402970",
+    "name": "ACE 미국배당다우존스",
+    "categoryKey": "dividend",
+    "marketSum": 8296
+  },
+  {
+    "itemcode": "494300",
+    "name": "KODEX 미국나스닥100데일리커버드콜OTM",
+    "categoryKey": "coveredcall",
+    "marketSum": 7767
+  },
+  {
+    "itemcode": "458760",
+    "name": "TIGER 미국배당다우존스타겟커버드콜2호",
+    "categoryKey": "coveredcall",
+    "marketSum": 7188
+  },
+  {
+    "itemcode": "314250",
+    "name": "KODEX 미국빅테크10(H)",
+    "categoryKey": "it_global",
+    "marketSum": 6933
+  },
+  {
+    "itemcode": "438100",
+    "name": "ACE 미국나스닥100미국채혼합50액티브",
+    "categoryKey": "mixed",
+    "marketSum": 6641
+  },
+  {
+    "itemcode": "491010",
+    "name": "TIGER 글로벌AI전력인프라액티브",
+    "categoryKey": "power_infra",
+    "marketSum": 6639
+  },
+  {
+    "itemcode": "455030",
+    "name": "KODEX 미국달러SOFR금리액티브(합성)",
+    "categoryKey": "currency",
+    "marketSum": 6566
+  },
+  {
+    "itemcode": "456610",
+    "name": "TIGER 미국달러SOFR금리액티브(합성)",
+    "categoryKey": "currency",
+    "marketSum": 6513
+  },
+  {
+    "itemcode": "0127P0",
+    "name": "ACE 미국대형성장주액티브",
+    "categoryKey": "growth",
+    "marketSum": 6409
+  },
+  {
+    "itemcode": "0048J0",
+    "name": "KODEX 미국머니마켓액티브",
+    "categoryKey": "currency",
+    "marketSum": 6311
+  },
+  {
+    "itemcode": "0131V0",
+    "name": "1Q 미국우주항공테크",
+    "categoryKey": "defense",
+    "marketSum": 6285
+  },
+  {
+    "itemcode": "484790",
+    "name": "KODEX 미국30년국채액티브(H)",
+    "categoryKey": "bond_kr",
+    "marketSum": 5958
+  },
+  {
+    "itemcode": "423920",
+    "name": "TIGER 미국필라델피아반도체레버리지(합성)",
+    "categoryKey": "leverage",
+    "marketSum": 5879
+  },
+  {
+    "itemcode": "483280",
+    "name": "KODEX 미국AI테크TOP10타겟커버드콜",
+    "categoryKey": "coveredcall",
+    "marketSum": 5822
+  },
+  {
+    "itemcode": "458250",
+    "name": "TIGER 미국30년국채스트립액티브(합성 H)",
+    "categoryKey": "bond_kr",
+    "marketSum": 5687
+  },
+  {
+    "itemcode": "482730",
+    "name": "TIGER 미국S&P500타겟데일리커버드콜",
+    "categoryKey": "coveredcall",
+    "marketSum": 5685
+  },
+  {
+    "itemcode": "449190",
+    "name": "KODEX 미국나스닥100(H)",
+    "categoryKey": "us",
+    "marketSum": 5461
+  },
+  {
+    "itemcode": "329750",
+    "name": "TIGER 미국달러단기채권액티브",
+    "categoryKey": "currency",
+    "marketSum": 5384
+  },
+  {
+    "itemcode": "490590",
+    "name": "RISE 미국AI밸류체인데일리고정커버드콜",
+    "categoryKey": "coveredcall",
+    "marketSum": 5242
+  },
+  {
+    "itemcode": "474220",
+    "name": "TIGER 미국테크TOP10타겟커버드콜",
+    "categoryKey": "coveredcall",
+    "marketSum": 5227
+  },
+  {
+    "itemcode": "0023A0",
+    "name": "SOL 미국양자컴퓨팅TOP10",
+    "categoryKey": "quantum",
+    "marketSum": 5167
+  },
+  {
+    "itemcode": "251350",
+    "name": "KODEX MSCI선진국",
+    "categoryKey": "developed",
+    "marketSum": 5129
+  },
+  {
+    "itemcode": "489250",
+    "name": "KODEX 미국배당다우존스",
+    "categoryKey": "dividend",
+    "marketSum": 5037
+  },
+  {
+    "itemcode": "448290",
+    "name": "TIGER 미국S&P500(H)",
+    "categoryKey": "us",
+    "marketSum": 4922
+  },
+  {
+    "itemcode": "442580",
+    "name": "PLUS 글로벌HBM반도체",
+    "categoryKey": "semi",
+    "marketSum": 4463
+  },
+  {
+    "itemcode": "241180",
+    "name": "TIGER 일본니케이225",
+    "categoryKey": "developed",
+    "marketSum": 4449
+  },
+  {
+    "itemcode": "490490",
+    "name": "SOL 미국배당미국채혼합50",
+    "categoryKey": "mixed",
+    "marketSum": 4376
+  },
+  {
+    "itemcode": "466950",
+    "name": "TIGER 글로벌AI액티브",
+    "categoryKey": "ai_infra",
+    "marketSum": 4266
+  },
+  {
+    "itemcode": "0167Z0",
+    "name": "KODEX 미국우주항공",
+    "categoryKey": "defense",
+    "marketSum": 4114
+  },
+  {
+    "itemcode": "453810",
+    "name": "KODEX 인도Nifty50",
+    "categoryKey": "em",
+    "marketSum": 3959
+  },
+  {
+    "itemcode": "461490",
+    "name": "RISE 글로벌자산배분액티브",
+    "categoryKey": "tdf",
+    "marketSum": 3865
+  },
+  {
+    "itemcode": "0053L0",
+    "name": "TIGER 차이나휴머노이드로봇",
+    "categoryKey": "robot",
+    "marketSum": 3795
+  },
+  {
+    "itemcode": "453870",
+    "name": "TIGER 인도니프티50",
+    "categoryKey": "em",
+    "marketSum": 3794
+  },
+  {
+    "itemcode": "442320",
+    "name": "RISE 글로벌원자력",
+    "categoryKey": "power_infra",
+    "marketSum": 3675
+  },
+  {
+    "itemcode": "0144L0",
+    "name": "KODEX 미국성장커버드콜액티브",
+    "categoryKey": "coveredcall",
+    "marketSum": 3665
+  },
+  {
+    "itemcode": "472160",
+    "name": "TIGER 미국테크TOP10 INDXX(H)",
+    "categoryKey": "it_global",
+    "marketSum": 3614
+  },
+  {
+    "itemcode": "491620",
+    "name": "RISE 미국테크100데일리고정커버드콜",
+    "categoryKey": "coveredcall",
+    "marketSum": 3605
+  },
+  {
+    "itemcode": "0060H0",
+    "name": "TIGER 토탈월드스탁액티브",
+    "categoryKey": "developed",
+    "marketSum": 3597
+  },
+  {
+    "itemcode": "0015B0",
+    "name": "KoAct 미국나스닥성장기업액티브",
+    "categoryKey": "us",
+    "marketSum": 3572
+  },
+  {
+    "itemcode": "473330",
+    "name": "SOL 미국30년국채커버드콜(합성)",
+    "categoryKey": "coveredcall",
+    "marketSum": 3570
+  },
+  {
+    "itemcode": "456880",
+    "name": "ACE 미국달러SOFR금리(합성)",
+    "categoryKey": "currency",
+    "marketSum": 3563
+  },
+  {
+    "itemcode": "0046A0",
+    "name": "TIGER 미국초단기(3개월이하)국채",
+    "categoryKey": "bond_short",
+    "marketSum": 3563
+  },
+  {
+    "itemcode": "418660",
+    "name": "TIGER 미국나스닥100레버리지(합성)",
+    "categoryKey": "leverage",
+    "marketSum": 3521
+  },
+  {
+    "itemcode": "441680",
+    "name": "TIGER 미국나스닥100커버드콜(합성)",
+    "categoryKey": "coveredcall",
+    "marketSum": 3508
+  },
+  {
+    "itemcode": "472170",
+    "name": "TIGER 미국테크TOP10채권혼합",
+    "categoryKey": "mixed",
+    "marketSum": 3440
+  },
+  {
+    "itemcode": "448300",
+    "name": "TIGER 미국나스닥100(H)",
+    "categoryKey": "us",
+    "marketSum": 3427
+  },
+  {
+    "itemcode": "481190",
+    "name": "SOL 미국테크TOP10",
+    "categoryKey": "it_global",
+    "marketSum": 3387
+  },
+  {
+    "itemcode": "245710",
+    "name": "ACE 베트남VN30(합성)",
+    "categoryKey": "em",
+    "marketSum": 3279
+  },
+  {
+    "itemcode": "435420",
+    "name": "TIGER 미국나스닥100채권혼합50",
+    "categoryKey": "mixed",
+    "marketSum": 3233
+  },
+  {
+    "itemcode": "0183J0",
+    "name": "TIGER 미국우주테크",
+    "categoryKey": "defense",
+    "marketSum": 3223
+  },
+  {
+    "itemcode": "0038A0",
+    "name": "KODEX 미국휴머노이드로봇",
+    "categoryKey": "robot",
+    "marketSum": 3211
+  },
+  {
+    "itemcode": "394670",
+    "name": "TIGER 글로벌리튬&2차전지SOLACTIVE(합성)",
+    "categoryKey": "battery",
+    "marketSum": 3177
+  },
+  {
+    "itemcode": "485540",
+    "name": "KODEX 미국AI테크TOP10",
+    "categoryKey": "it_kr",
+    "marketSum": 3173
+  },
+  {
+    "itemcode": "437080",
+    "name": "KODEX 미국종합채권ESG액티브(H)",
+    "categoryKey": "bond_kr",
+    "marketSum": 3157
+  },
+  {
+    "itemcode": "472870",
+    "name": "RISE 미국30년국채엔화노출(합성 H)",
+    "categoryKey": "bond_kr",
+    "marketSum": 3054
+  },
+  {
+    "itemcode": "476760",
+    "name": "ACE 미국30년국채액티브",
+    "categoryKey": "bond_kr",
+    "marketSum": 2884
+  },
+  {
+    "itemcode": "486450",
+    "name": "SOL 미국AI전력인프라",
+    "categoryKey": "power_infra",
+    "marketSum": 2844
+  },
+  {
+    "itemcode": "458260",
+    "name": "TIGER 미국투자등급회사채액티브(H)",
+    "categoryKey": "bond_kr",
+    "marketSum": 2838
+  },
+  {
+    "itemcode": "433330",
+    "name": "SOL 미국S&P500",
+    "categoryKey": "us",
+    "marketSum": 2836
+  },
+  {
+    "itemcode": "283580",
+    "name": "KODEX 차이나CSI300",
+    "categoryKey": "china",
+    "marketSum": 2836
+  },
+  {
+    "itemcode": "473460",
+    "name": "KODEX 미국서학개미",
+    "categoryKey": "us",
+    "marketSum": 2826
+  },
+  {
+    "itemcode": "493810",
+    "name": "TIGER 미국AI빅테크10타겟데일리커버드콜",
+    "categoryKey": "coveredcall",
+    "marketSum": 2790
+  },
+  {
+    "itemcode": "0051G0",
+    "name": "SOL 미국원자력SMR",
+    "categoryKey": "power_infra",
+    "marketSum": 2759
+  },
+  {
+    "itemcode": "0026S0",
+    "name": "1Q 미국S&P500",
+    "categoryKey": "us",
+    "marketSum": 2705
+  },
+  {
+    "itemcode": "498270",
+    "name": "KIWOOM 미국양자컴퓨팅",
+    "categoryKey": "quantum",
+    "marketSum": 2679
+  },
+  {
+    "itemcode": "0052S0",
+    "name": "1Q 미국S&P500미국채혼합50액티브",
+    "categoryKey": "mixed",
+    "marketSum": 2637
+  },
+  {
+    "itemcode": "0047A0",
+    "name": "TIGER 차이나테크TOP10",
+    "categoryKey": "china",
+    "marketSum": 2630
+  },
+  {
+    "itemcode": "409820",
+    "name": "KODEX 미국나스닥100레버리지(합성 H)",
+    "categoryKey": "leverage",
+    "marketSum": 2398
+  },
+  {
+    "itemcode": "261260",
+    "name": "KODEX 미국달러선물인버스2X",
+    "categoryKey": "leverage",
+    "marketSum": 2374
+  },
+  {
+    "itemcode": "305080",
+    "name": "TIGER 미국채10년선물",
+    "categoryKey": "bond_global",
+    "marketSum": 2360
+  },
+  {
+    "itemcode": "0040X0",
+    "name": "SOL 팔란티어미국채커버드콜혼합",
+    "categoryKey": "coveredcall",
+    "marketSum": 2351
+  },
+  {
+    "itemcode": "0173Y0",
+    "name": "KODEX 미국AI광통신네트워크",
+    "categoryKey": "ai_infra",
+    "marketSum": 2288
+  },
+  {
+    "itemcode": "396520",
+    "name": "TIGER 차이나반도체FACTSET",
+    "categoryKey": "semi",
+    "marketSum": 2287
+  },
+  {
+    "itemcode": "0048K0",
+    "name": "KODEX 차이나휴머노이드로봇",
+    "categoryKey": "robot",
+    "marketSum": 2225
+  },
+  {
+    "itemcode": "0123G0",
+    "name": "TIGER 미국AI전력SMR",
+    "categoryKey": "power_infra",
+    "marketSum": 2220
+  },
+  {
+    "itemcode": "490090",
+    "name": "TIGER 미국AI빅테크10",
+    "categoryKey": "it_global",
+    "marketSum": 2205
+  },
+  {
+    "itemcode": "0008S0",
+    "name": "TIGER 미국배당다우존스타겟데일리커버드콜",
+    "categoryKey": "coveredcall",
+    "marketSum": 2194
+  },
+  {
+    "itemcode": "414780",
+    "name": "TIGER 차이나과창판STAR50(합성)",
+    "categoryKey": "china",
+    "marketSum": 2153
+  },
+  {
+    "itemcode": "200250",
+    "name": "KIWOOM 인도Nifty50(합성)",
+    "categoryKey": "em",
+    "marketSum": 2126
+  },
+  {
+    "itemcode": "0111P0",
+    "name": "1Q 미국나스닥100미국채혼합50액티브",
+    "categoryKey": "mixed",
+    "marketSum": 2095
+  },
+  {
+    "itemcode": "471040",
+    "name": "KoAct 글로벌AI&로봇액티브",
+    "categoryKey": "ai_infra",
+    "marketSum": 2087
+  },
+  {
+    "itemcode": "452360",
+    "name": "SOL 미국배당다우존스(H)",
+    "categoryKey": "dividend",
+    "marketSum": 2074
+  },
+  {
+    "itemcode": "480020",
+    "name": "ACE 미국빅테크7+데일리타겟커버드콜(합성)",
+    "categoryKey": "coveredcall",
+    "marketSum": 1849
+  },
+  {
+    "itemcode": "304660",
+    "name": "KODEX 미국30년국채울트라선물(H)",
+    "categoryKey": "bond_kr",
+    "marketSum": 1813
+  },
+  {
+    "itemcode": "0091C0",
+    "name": "KODEX 미국10년국채액티브(H)",
+    "categoryKey": "bond_kr",
+    "marketSum": 1748
+  },
+  {
+    "itemcode": "0005A0",
+    "name": "KODEX 미국S&P500데일리커버드콜OTM",
+    "categoryKey": "coveredcall",
+    "marketSum": 1635
+  },
+  {
+    "itemcode": "429000",
+    "name": "TIGER 미국S&P500배당귀족",
+    "categoryKey": "dividend",
+    "marketSum": 1630
+  },
+  {
+    "itemcode": "192090",
+    "name": "TIGER 차이나CSI300",
+    "categoryKey": "china",
+    "marketSum": 1619
+  },
+  {
+    "itemcode": "483290",
+    "name": "KODEX 미국배당다우존스타겟커버드콜",
+    "categoryKey": "coveredcall",
+    "marketSum": 1600
+  },
+  {
+    "itemcode": "481180",
+    "name": "SOL 미국AI소프트웨어",
+    "categoryKey": "it_kr",
+    "marketSum": 1583
+  },
+  {
+    "itemcode": "182480",
+    "name": "TIGER 미국MSCI리츠(합성 H)",
+    "categoryKey": "reits",
+    "marketSum": 1570
+  },
+  {
+    "itemcode": "480030",
+    "name": "ACE 미국500데일리타겟커버드콜(합성)",
+    "categoryKey": "coveredcall",
+    "marketSum": 1567
+  },
+  {
+    "itemcode": "372330",
+    "name": "KODEX 차이나항셍테크",
+    "categoryKey": "china",
+    "marketSum": 1540
+  },
+  {
+    "itemcode": "219480",
+    "name": "KODEX 미국S&P500선물(H)",
+    "categoryKey": "us",
+    "marketSum": 1511
+  },
+  {
+    "itemcode": "0151S0",
+    "name": "KODEX 미국AI반도체TOP3플러스",
+    "categoryKey": "semi",
+    "marketSum": 1450
+  },
+  {
+    "itemcode": "411420",
+    "name": "KODEX 미국나스닥AI테크액티브",
+    "categoryKey": "it_global",
+    "marketSum": 1440
+  },
+  {
+    "itemcode": "245340",
+    "name": "TIGER 미국다우존스30",
+    "categoryKey": "us",
+    "marketSum": 1422
+  },
+  {
+    "itemcode": "423170",
+    "name": "SOL 글로벌AI반도체탑픽액티브",
+    "categoryKey": "semi",
+    "marketSum": 1420
+  },
+  {
+    "itemcode": "465610",
+    "name": "ACE 미국빅테크TOP7 Plus레버리지(합성)",
+    "categoryKey": "leverage",
+    "marketSum": 1404
+  },
+  {
+    "itemcode": "464930",
+    "name": "TIGER 글로벌혁신블루칩TOP10",
+    "categoryKey": "growth",
+    "marketSum": 1374
+  },
+  {
+    "itemcode": "309230",
+    "name": "ACE 미국WideMoat동일가중",
+    "categoryKey": "us",
+    "marketSum": 1348
+  },
+  {
+    "itemcode": "0069M0",
+    "name": "1Q 미국나스닥100",
+    "categoryKey": "us",
+    "marketSum": 1332
+  },
+  {
+    "itemcode": "0180V0",
+    "name": "ACE 미국우주테크액티브",
+    "categoryKey": "defense",
+    "marketSum": 1313
+  },
+  {
+    "itemcode": "480040",
+    "name": "ACE 미국반도체데일리타겟커버드콜(합성)",
+    "categoryKey": "coveredcall",
+    "marketSum": 1295
+  },
+  {
+    "itemcode": "0176E0",
+    "name": "RISE 미국AI전력인프라액티브",
+    "categoryKey": "power_infra",
+    "marketSum": 1283
+  },
+  {
+    "itemcode": "168580",
+    "name": "ACE 중국본토CSI300",
+    "categoryKey": "china",
+    "marketSum": 1277
+  },
+  {
+    "itemcode": "490600",
+    "name": "RISE 미국배당100데일리고정커버드콜",
+    "categoryKey": "coveredcall",
+    "marketSum": 1276
+  },
+  {
+    "itemcode": "0127M0",
+    "name": "ACE 미국대형가치주액티브",
+    "categoryKey": "dividend",
+    "marketSum": 1273
+  },
+  {
+    "itemcode": "488500",
+    "name": "TIGER 미국S&P500동일가중",
+    "categoryKey": "us",
+    "marketSum": 1268
+  },
+  {
+    "itemcode": "464310",
+    "name": "TIGER 글로벌AI&로보틱스 INDXX",
+    "categoryKey": "ai_infra",
+    "marketSum": 1247
+  },
+  {
+    "itemcode": "204480",
+    "name": "TIGER 차이나CSI300레버리지(합성)",
+    "categoryKey": "leverage",
+    "marketSum": 1242
+  },
+  {
+    "itemcode": "0118Z0",
+    "name": "ACE 미국AI테크핵심산업액티브",
+    "categoryKey": "it_kr",
+    "marketSum": 1242
+  },
+  {
+    "itemcode": "394660",
+    "name": "TIGER 글로벌자율주행&전기차SOLACTIVE",
+    "categoryKey": "auto",
+    "marketSum": 1224
+  },
+  {
+    "itemcode": "399110",
+    "name": "SOL 미국S&P500ESG",
+    "categoryKey": "esg",
+    "marketSum": 1192
+  },
+  {
+    "itemcode": "0085N0",
+    "name": "ACE 미국10년국채액티브(H)",
+    "categoryKey": "bond_kr",
+    "marketSum": 1184
+  },
+  {
+    "itemcode": "261270",
+    "name": "KODEX 미국달러선물인버스",
+    "categoryKey": "inverse",
+    "marketSum": 1182
+  },
+  {
+    "itemcode": "304940",
+    "name": "KODEX 미국나스닥100선물(H)",
+    "categoryKey": "us",
+    "marketSum": 1162
+  },
+  {
+    "itemcode": "473640",
+    "name": "HANARO 글로벌금채굴기업",
+    "categoryKey": "commodity",
+    "marketSum": 1104
+  },
+  {
+    "itemcode": "468380",
+    "name": "KODEX iShares미국하이일드액티브",
+    "categoryKey": "bond_global",
+    "marketSum": 1067
+  },
+  {
+    "itemcode": "479730",
+    "name": "TIGER 인도빌리언컨슈머",
+    "categoryKey": "em",
+    "marketSum": 1059
+  },
+  {
+    "itemcode": "308620",
+    "name": "KODEX 미국10년국채선물",
+    "categoryKey": "bond_kr",
+    "marketSum": 1055
+  },
+  {
+    "itemcode": "447620",
+    "name": "SOL 미국TOP5채권혼합50",
+    "categoryKey": "mixed",
+    "marketSum": 1033
+  },
+  {
+    "itemcode": "0132H0",
+    "name": "KODEX 미국원자력SMR",
+    "categoryKey": "power_infra",
+    "marketSum": 1014
+  },
+  {
+    "itemcode": "0036R0",
+    "name": "RISE 미국휴머노이드로봇",
+    "categoryKey": "robot",
+    "marketSum": 1005
+  },
+  {
+    "itemcode": "195980",
+    "name": "PLUS 신흥국MSCI(합성 H)",
+    "categoryKey": "em",
+    "marketSum": 979
+  },
+  {
+    "itemcode": "0035T0",
+    "name": "PLUS 글로벌휴머노이드로봇액티브",
+    "categoryKey": "robot",
+    "marketSum": 978
+  },
+  {
+    "itemcode": "203780",
+    "name": "TIGER 미국나스닥바이오",
+    "categoryKey": "bio",
+    "marketSum": 963
+  },
+  {
+    "itemcode": "143850",
+    "name": "TIGER 미국S&P500선물(H)",
+    "categoryKey": "us",
+    "marketSum": 961
+  },
+  {
+    "itemcode": "0102A0",
+    "name": "TIGER 미국AI소프트웨어TOP4Plus",
+    "categoryKey": "it_kr",
+    "marketSum": 960
+  },
+  {
+    "itemcode": "476030",
+    "name": "SOL 미국나스닥100",
+    "categoryKey": "us",
+    "marketSum": 951
+  },
+  {
+    "itemcode": "0085P0",
+    "name": "ACE 미국10년국채액티브",
+    "categoryKey": "bond_kr",
+    "marketSum": 950
+  },
+  {
+    "itemcode": "453330",
+    "name": "RISE 미국S&P500(H)",
+    "categoryKey": "us",
+    "marketSum": 944
+  },
+  {
+    "itemcode": "269540",
+    "name": "PLUS 미국S&P500(H)",
+    "categoryKey": "us",
+    "marketSum": 930
+  },
+  {
+    "itemcode": "412770",
+    "name": "TIGER 글로벌AI플랫폼액티브",
+    "categoryKey": "ai_infra",
+    "marketSum": 913
+  },
+  {
+    "itemcode": "460960",
+    "name": "ACE 글로벌인컴TOP10",
+    "categoryKey": "dividend",
+    "marketSum": 859
+  },
+  {
+    "itemcode": "0142D0",
+    "name": "TIGER 미국AI데이터센터TOP4Plus",
+    "categoryKey": "ai_infra",
+    "marketSum": 854
+  },
+  {
+    "itemcode": "0049M0",
+    "name": "ACE 미국배당퀄리티+커버드콜액티브",
+    "categoryKey": "coveredcall",
+    "marketSum": 852
+  },
+  {
+    "itemcode": "440910",
+    "name": "WON 미국우주항공방산",
+    "categoryKey": "defense",
+    "marketSum": 844
+  },
+  {
+    "itemcode": "0089C0",
+    "name": "KODEX 미국S&P500변동성확대시커버드콜",
+    "categoryKey": "coveredcall",
+    "marketSum": 807
+  },
+  {
+    "itemcode": "485690",
+    "name": "RISE 미국AI밸류체인TOP3Plus",
+    "categoryKey": "valuechain",
+    "marketSum": 800
+  },
+  {
+    "itemcode": "476750",
+    "name": "ACE 미국30년국채엔화노출액티브(H)",
+    "categoryKey": "bond_kr",
+    "marketSum": 799
+  },
+  {
+    "itemcode": "0041E0",
+    "name": "KODEX 미국S&P500액티브",
+    "categoryKey": "us",
+    "marketSum": 741
+  },
+  {
+    "itemcode": "453080",
+    "name": "KIWOOM 미국나스닥100(H)",
+    "categoryKey": "us",
+    "marketSum": 738
+  },
+  {
+    "itemcode": "463680",
+    "name": "KODEX 미국S&P500테크놀로지",
+    "categoryKey": "it_kr",
+    "marketSum": 737
+  },
+  {
+    "itemcode": "261240",
+    "name": "KODEX 미국달러선물",
+    "categoryKey": "currency",
+    "marketSum": 730
+  },
+  {
+    "itemcode": "494840",
+    "name": "TIGER 미국방산TOP10",
+    "categoryKey": "defense",
+    "marketSum": 725
+  },
+  {
+    "itemcode": "0041D0",
+    "name": "KODEX 미국AI소프트웨어TOP10",
+    "categoryKey": "it_kr",
+    "marketSum": 721
+  },
+  {
+    "itemcode": "444490",
+    "name": "WON 미국S&P500",
+    "categoryKey": "us",
+    "marketSum": 719
+  },
+  {
+    "itemcode": "475350",
+    "name": "RISE 버크셔포트폴리오TOP10",
+    "categoryKey": "us",
+    "marketSum": 698
+  },
+  {
+    "itemcode": "150460",
+    "name": "TIGER 중국소비테마",
+    "categoryKey": "kculture",
+    "marketSum": 697
+  },
+  {
+    "itemcode": "0104H0",
+    "name": "KoAct 미국나스닥채권혼합50액티브",
+    "categoryKey": "mixed",
+    "marketSum": 687
+  },
+  {
+    "itemcode": "456680",
+    "name": "TIGER 차이나전기차레버리지(합성)",
+    "categoryKey": "leverage",
+    "marketSum": 687
+  },
+  {
+    "itemcode": "275980",
+    "name": "TIGER 글로벌4차산업혁신기술(합성 H)",
+    "categoryKey": "growth",
+    "marketSum": 654
+  },
+  {
+    "itemcode": "473590",
+    "name": "ACE 미국주식베스트셀러",
+    "categoryKey": "us",
+    "marketSum": 654
+  },
+  {
+    "itemcode": "0057H0",
+    "name": "PLUS 미국S&P500미국채혼합50액티브",
+    "categoryKey": "mixed",
+    "marketSum": 647
+  },
+  {
+    "itemcode": "0080X0",
+    "name": "SOL 미국S&P500미국채혼합50",
+    "categoryKey": "mixed",
+    "marketSum": 641
+  },
+  {
+    "itemcode": "0000D0",
+    "name": "TIGER 엔비디아미국채커버드콜밸런스(합성)",
+    "categoryKey": "coveredcall",
+    "marketSum": 633
+  },
+  {
+    "itemcode": "415920",
+    "name": "PLUS 글로벌희토류&전략자원생산기업",
+    "categoryKey": "commodity",
+    "marketSum": 630
+  },
+  {
+    "itemcode": "455660",
+    "name": "ACE 미국하이일드액티브(H)",
+    "categoryKey": "bond_global",
+    "marketSum": 618
+  },
+  {
+    "itemcode": "0007G0",
+    "name": "PLUS 글로벌원자력밸류체인",
+    "categoryKey": "power_infra",
+    "marketSum": 606
+  },
+  {
+    "itemcode": "0068M0",
+    "name": "KODEX 미국S&P500버퍼6월액티브",
+    "categoryKey": "us",
+    "marketSum": 605
+  },
+  {
+    "itemcode": "455960",
+    "name": "RISE 미국달러SOFR금리액티브(합성)",
+    "categoryKey": "currency",
+    "marketSum": 597
+  },
+  {
+    "itemcode": "371470",
+    "name": "TIGER 차이나바이오테크SOLACTIVE",
+    "categoryKey": "bio",
+    "marketSum": 597
+  },
+  {
+    "itemcode": "458750",
+    "name": "TIGER 미국배당다우존스타겟커버드콜1호",
+    "categoryKey": "coveredcall",
+    "marketSum": 591
+  },
+  {
+    "itemcode": "453640",
+    "name": "KODEX 미국S&P500헬스케어",
+    "categoryKey": "bio",
+    "marketSum": 576
+  },
+  {
+    "itemcode": "449770",
+    "name": "KIWOOM 미국S&P500",
+    "categoryKey": "us",
+    "marketSum": 566
+  },
+  {
+    "itemcode": "225040",
+    "name": "TIGER 미국S&P500레버리지(합성 H)",
+    "categoryKey": "leverage",
+    "marketSum": 556
+  },
+  {
+    "itemcode": "101280",
+    "name": "KODEX 일본TOPIX100",
+    "categoryKey": "developed",
+    "marketSum": 553
+  },
+  {
+    "itemcode": "0118S0",
+    "name": "SOL 미국넥스트테크TOP10액티브",
+    "categoryKey": "it_kr",
+    "marketSum": 551
+  },
+  {
+    "itemcode": "256750",
+    "name": "KODEX 차이나심천ChiNext(합성)",
+    "categoryKey": "china",
+    "marketSum": 547
+  },
+  {
+    "itemcode": "218420",
+    "name": "KODEX 미국S&P500에너지(합성)",
+    "categoryKey": "energy",
+    "marketSum": 545
+  },
+  {
+    "itemcode": "469060",
+    "name": "RISE 미국반도체NYSE",
+    "categoryKey": "semi",
+    "marketSum": 542
+  },
+  {
+    "itemcode": "0067V0",
+    "name": "TIGER 차이나글로벌리더스TOP3+",
+    "categoryKey": "china",
+    "marketSum": 539
+  },
+  {
+    "itemcode": "352540",
+    "name": "KODEX 일본부동산리츠(H)",
+    "categoryKey": "reits",
+    "marketSum": 533
+  },
+  {
+    "itemcode": "0046Y0",
+    "name": "ACE 미국배당퀄리티",
+    "categoryKey": "dividend",
+    "marketSum": 531
+  },
+  {
+    "itemcode": "452250",
+    "name": "ACE 미국30년국채선물레버리지(합성 H)",
+    "categoryKey": "leverage",
+    "marketSum": 530
+  },
+  {
+    "itemcode": "472830",
+    "name": "RISE 미국30년국채커버드콜(합성)",
+    "categoryKey": "coveredcall",
+    "marketSum": 506
+  },
+  {
+    "itemcode": "475070",
+    "name": "KoAct 글로벌친환경전력인프라액티브",
+    "categoryKey": "power_infra",
+    "marketSum": 503
+  },
+  {
+    "itemcode": "0020H0",
+    "name": "KoAct 글로벌양자컴퓨팅액티브",
+    "categoryKey": "quantum",
+    "marketSum": 502
+  },
+  {
+    "itemcode": "428510",
+    "name": "KODEX 차이나AI테크액티브",
+    "categoryKey": "china",
+    "marketSum": 502
+  },
+  {
+    "itemcode": "495940",
+    "name": "RISE 미국AI테크액티브",
+    "categoryKey": "it_kr",
+    "marketSum": 500
+  },
+  {
+    "itemcode": "200030",
+    "name": "KODEX 미국S&P500산업재(합성)",
+    "categoryKey": "industrial",
+    "marketSum": 497
+  },
+  {
+    "itemcode": "474800",
+    "name": "KIWOOM 미국원유에너지기업",
+    "categoryKey": "commodity",
+    "marketSum": 486
+  },
+  {
+    "itemcode": "407830",
+    "name": "에셋플러스 글로벌플랫폼액티브",
+    "categoryKey": "it_global",
+    "marketSum": 474
+  },
+  {
+    "itemcode": "480310",
+    "name": "TIGER 글로벌온디바이스AI",
+    "categoryKey": "ai_infra",
+    "marketSum": 464
+  },
+  {
+    "itemcode": "276990",
+    "name": "KODEX 글로벌로봇(합성)",
+    "categoryKey": "robot",
+    "marketSum": 461
+  },
+  {
+    "itemcode": "496770",
+    "name": "PLUS 글로벌방산",
+    "categoryKey": "defense",
+    "marketSum": 457
+  },
+  {
+    "itemcode": "461340",
+    "name": "HANARO 글로벌생성형AI액티브",
+    "categoryKey": "ai_infra",
+    "marketSum": 449
+  },
+  {
+    "itemcode": "453650",
+    "name": "KODEX 미국S&P500금융",
+    "categoryKey": "finance",
+    "marketSum": 445
+  },
+  {
+    "itemcode": "464470",
+    "name": "PLUS 미국채30년액티브",
+    "categoryKey": "bond_global",
+    "marketSum": 443
+  },
+  {
+    "itemcode": "0083S0",
+    "name": "1Q 미국메디컬AI",
+    "categoryKey": "bio",
+    "marketSum": 441
+  },
+  {
+    "itemcode": "292560",
+    "name": "TIGER 일본엔선물",
+    "categoryKey": "currency",
+    "marketSum": 437
+  },
+  {
+    "itemcode": "0040S0",
+    "name": "HANARO 글로벌피지컬AI액티브",
+    "categoryKey": "ai_infra",
+    "marketSum": 435
+  },
+  {
+    "itemcode": "174360",
+    "name": "RISE 중국본토대형주CSI100",
+    "categoryKey": "china",
+    "marketSum": 435
+  },
+  {
+    "itemcode": "440650",
+    "name": "ACE 미국달러단기채권액티브",
+    "categoryKey": "currency",
+    "marketSum": 430
+  },
+  {
+    "itemcode": "479620",
+    "name": "SOL 미국AI반도체칩메이커",
+    "categoryKey": "semi",
+    "marketSum": 425
+  },
+  {
+    "itemcode": "489290",
+    "name": "WON 미국빌리어네어",
+    "categoryKey": "us",
+    "marketSum": 424
+  },
+  {
+    "itemcode": "476690",
+    "name": "TIGER 글로벌비만치료제TOP2Plus",
+    "categoryKey": "bio",
+    "marketSum": 415
+  },
+  {
+    "itemcode": "419430",
+    "name": "KODEX 차이나2차전지MSCI(합성)",
+    "categoryKey": "battery",
+    "marketSum": 413
+  },
+  {
+    "itemcode": "437070",
+    "name": "KODEX 아시아달러채권ESG플러스액티브",
+    "categoryKey": "bond_global",
+    "marketSum": 410
+  },
+  {
+    "itemcode": "476070",
+    "name": "KODEX 글로벌비만치료제TOP2 Plus",
+    "categoryKey": "bio",
+    "marketSum": 409
+  },
+  {
+    "itemcode": "429760",
+    "name": "PLUS 미국S&P500",
+    "categoryKey": "us",
+    "marketSum": 408
+  },
+  {
+    "itemcode": "0155M0",
+    "name": "ACE 미국SMR원자력TOP10",
+    "categoryKey": "power_infra",
+    "marketSum": 406
+  },
+  {
+    "itemcode": "099140",
+    "name": "KODEX 차이나H",
+    "categoryKey": "china",
+    "marketSum": 401
+  },
+  {
+    "itemcode": "261120",
+    "name": "TIGER 미국달러선물인버스2X",
+    "categoryKey": "leverage",
+    "marketSum": 401
+  },
+  {
+    "itemcode": "414270",
+    "name": "ACE 글로벌자율주행액티브",
+    "categoryKey": "auto",
+    "marketSum": 399
+  },
+  {
+    "itemcode": "238720",
+    "name": "ACE 일본Nikkei225(H)",
+    "categoryKey": "developed",
+    "marketSum": 386
+  },
+  {
+    "itemcode": "0023B0",
+    "name": "PLUS 미국양자컴퓨팅TOP10",
+    "categoryKey": "quantum",
+    "marketSum": 385
+  },
+  {
+    "itemcode": "196030",
+    "name": "ACE 일본TOPIX레버리지(H)",
+    "categoryKey": "leverage",
+    "marketSum": 376
+  },
+  {
+    "itemcode": "245360",
+    "name": "TIGER 차이나HSCEI",
+    "categoryKey": "china",
+    "marketSum": 364
+  },
+  {
+    "itemcode": "287180",
+    "name": "PLUS 미국나스닥테크",
+    "categoryKey": "it_global",
+    "marketSum": 362
+  },
+  {
+    "itemcode": "276970",
+    "name": "KODEX 미국S&P500배당귀족커버드콜(합성 H)",
+    "categoryKey": "coveredcall",
+    "marketSum": 362
+  },
+  {
+    "itemcode": "0162L0",
+    "name": "KODEX 차이나AI반도체TOP10",
+    "categoryKey": "semi",
+    "marketSum": 360
+  },
+  {
+    "itemcode": "418670",
+    "name": "TIGER 글로벌AI사이버보안",
+    "categoryKey": "ai_infra",
+    "marketSum": 359
+  },
+  {
+    "itemcode": "459750",
+    "name": "RISE 글로벌주식분산액티브",
+    "categoryKey": "developed",
+    "marketSum": 357
+  },
+  {
+    "itemcode": "0013R0",
+    "name": "RISE 테슬라미국채타겟커버드콜혼합(합성)",
+    "categoryKey": "coveredcall",
+    "marketSum": 355
+  },
+  {
+    "itemcode": "468630",
+    "name": "KODEX iShares미국투자등급회사채액티브",
+    "categoryKey": "bond_kr",
+    "marketSum": 350
+  },
+  {
+    "itemcode": "0137V0",
+    "name": "KIWOOM 미국S&P500모멘텀",
+    "categoryKey": "growth",
+    "marketSum": 348
+  },
+  {
+    "itemcode": "461600",
+    "name": "SOL 미국30년국채액티브(H)",
+    "categoryKey": "bond_kr",
+    "marketSum": 343
+  },
+  {
+    "itemcode": "261250",
+    "name": "KODEX 미국달러선물레버리지",
+    "categoryKey": "leverage",
+    "marketSum": 343
+  },
+  {
+    "itemcode": "204450",
+    "name": "KODEX 차이나H레버리지(H)",
+    "categoryKey": "leverage",
+    "marketSum": 337
+  },
+  {
+    "itemcode": "461450",
+    "name": "KODEX 코스닥글로벌",
+    "categoryKey": "kr_small",
+    "marketSum": 336
+  },
+  {
+    "itemcode": "491090",
+    "name": "KODEX 미국테크TOP3플러스",
+    "categoryKey": "it_global",
+    "marketSum": 332
+  },
+  {
+    "itemcode": "475380",
+    "name": "RISE 글로벌리얼티인컴",
+    "categoryKey": "reits",
+    "marketSum": 327
+  },
+  {
+    "itemcode": "195930",
+    "name": "TIGER 유로스탁스50(합성 H)",
+    "categoryKey": "developed",
+    "marketSum": 322
+  },
+  {
+    "itemcode": "493420",
+    "name": "SOL 미국배당다우존스2호",
+    "categoryKey": "dividend",
+    "marketSum": 321
+  },
+  {
+    "itemcode": "0065G0",
+    "name": "KODEX 차이나테크TOP10",
+    "categoryKey": "china",
+    "marketSum": 320
+  },
+  {
+    "itemcode": "256440",
+    "name": "ACE MSCI인도네시아(합성)",
+    "categoryKey": "em",
+    "marketSum": 320
+  },
+  {
+    "itemcode": "0097L0",
+    "name": "KIWOOM 한국고배당&미국AI테크",
+    "categoryKey": "it_kr",
+    "marketSum": 319
+  },
+  {
+    "itemcode": "0137W0",
+    "name": "KIWOOM 미국S&P500&GOLD",
+    "categoryKey": "commodity",
+    "marketSum": 318
+  },
+  {
+    "itemcode": "0138T0",
+    "name": "RISE 미국S&P500데일리고정커버드콜",
+    "categoryKey": "coveredcall",
+    "marketSum": 317
+  },
+  {
+    "itemcode": "0144M0",
+    "name": "KODEX 미국드론UAM TOP10",
+    "categoryKey": "defense",
+    "marketSum": 317
+  },
+  {
+    "itemcode": "352560",
+    "name": "KODEX 미국부동산리츠(H)",
+    "categoryKey": "reits",
+    "marketSum": 316
+  },
+  {
+    "itemcode": "449780",
+    "name": "KIWOOM 미국S&P500(H)",
+    "categoryKey": "us",
+    "marketSum": 314
+  },
+  {
+    "itemcode": "245350",
+    "name": "TIGER 유로스탁스배당30",
+    "categoryKey": "dividend",
+    "marketSum": 314
+  },
+  {
+    "itemcode": "276650",
+    "name": "RISE 글로벌테크놀로지(합성 H)",
+    "categoryKey": "it_global",
+    "marketSum": 312
+  },
+  {
+    "itemcode": "494410",
+    "name": "PLUS 미국S&P500성장주",
+    "categoryKey": "growth",
+    "marketSum": 308
+  },
+  {
+    "itemcode": "477730",
+    "name": "KODEX 인도타타그룹",
+    "categoryKey": "em",
+    "marketSum": 305
+  },
+  {
+    "itemcode": "248270",
+    "name": "TIGER S&P글로벌헬스케어(합성)",
+    "categoryKey": "bio",
+    "marketSum": 302
+  },
+  {
+    "itemcode": "280930",
+    "name": "KODEX 미국러셀2000(H)",
+    "categoryKey": "us",
+    "marketSum": 300
+  },
+  {
+    "itemcode": "473490",
+    "name": "KIWOOM 글로벌AI반도체",
+    "categoryKey": "semi",
+    "marketSum": 298
+  },
+  {
+    "itemcode": "387270",
+    "name": "TIGER 글로벌이노베이션액티브",
+    "categoryKey": "growth",
+    "marketSum": 294
+  },
+  {
+    "itemcode": "0107F0",
+    "name": "KIWOOM 미국고배당&AI테크",
+    "categoryKey": "it_kr",
+    "marketSum": 289
+  },
+  {
+    "itemcode": "269420",
+    "name": "KODEX S&P글로벌인프라(합성)",
+    "categoryKey": "industrial",
+    "marketSum": 287
+  },
+  {
+    "itemcode": "437350",
+    "name": "RISE 미국단기투자등급회사채액티브",
+    "categoryKey": "currency",
+    "marketSum": 286
+  },
+  {
+    "itemcode": "438320",
+    "name": "TIGER 차이나항셍테크레버리지(합성 H)",
+    "categoryKey": "leverage",
+    "marketSum": 284
+  },
+  {
+    "itemcode": "459790",
+    "name": "KIWOOM 미국성장기업30액티브",
+    "categoryKey": "us",
+    "marketSum": 282
+  },
+  {
+    "itemcode": "446690",
+    "name": "KODEX 아시아AI반도체exChina액티브",
+    "categoryKey": "semi",
+    "marketSum": 275
+  },
+  {
+    "itemcode": "138230",
+    "name": "KIWOOM 미국달러선물",
+    "categoryKey": "currency",
+    "marketSum": 274
+  },
+  {
+    "itemcode": "0088N0",
+    "name": "WON K-글로벌수급상위",
+    "categoryKey": "unclassified",
+    "marketSum": 272
+  },
+  {
+    "itemcode": "461580",
+    "name": "TIGER 코스닥글로벌",
+    "categoryKey": "kr_small",
+    "marketSum": 271
+  },
+  {
+    "itemcode": "415760",
+    "name": "SOL 차이나육성산업액티브(합성)",
+    "categoryKey": "china",
+    "marketSum": 271
+  },
+  {
+    "itemcode": "0153X0",
+    "name": "PLUS 미국고배당주액티브",
+    "categoryKey": "dividend",
+    "marketSum": 269
+  },
+  {
+    "itemcode": "491830",
+    "name": "TIGER 미국AI반도체팹리스",
+    "categoryKey": "semi",
+    "marketSum": 269
+  },
+  {
+    "itemcode": "497780",
+    "name": "KoAct 미국천연가스인프라액티브",
+    "categoryKey": "commodity",
+    "marketSum": 266
+  },
+  {
+    "itemcode": "415340",
+    "name": "KODEX 차이나과창판STAR50(합성)",
+    "categoryKey": "china",
+    "marketSum": 264
+  },
+  {
+    "itemcode": "483570",
+    "name": "KCGI 미국S&P500 TOP10",
+    "categoryKey": "us",
+    "marketSum": 258
+  },
+  {
+    "itemcode": "277540",
+    "name": "ACE 아시아TOP50",
+    "categoryKey": "unclassified",
+    "marketSum": 255
+  },
+  {
+    "itemcode": "481340",
+    "name": "RISE 미국30년국채액티브",
+    "categoryKey": "bond_kr",
+    "marketSum": 250
+  },
+  {
+    "itemcode": "195970",
+    "name": "PLUS 선진국MSCI(합성 H)",
+    "categoryKey": "developed",
+    "marketSum": 249
+  },
+  {
+    "itemcode": "419650",
+    "name": "PLUS 글로벌수소&차세대연료전지",
+    "categoryKey": "power_infra",
+    "marketSum": 244
+  },
+  {
+    "itemcode": "219390",
+    "name": "RISE 미국S&P원유생산기업(합성 H)",
+    "categoryKey": "commodity",
+    "marketSum": 241
+  },
+  {
+    "itemcode": "465660",
+    "name": "TIGER 일본반도체FACTSET",
+    "categoryKey": "semi",
+    "marketSum": 240
+  },
+  {
+    "itemcode": "0089B0",
+    "name": "PLUS 미국나스닥100미국채혼합50",
+    "categoryKey": "mixed",
+    "marketSum": 240
+  },
+  {
+    "itemcode": "463300",
+    "name": "RISE 중국본토CSI300",
+    "categoryKey": "china",
+    "marketSum": 231
+  },
+  {
+    "itemcode": "433220",
+    "name": "에셋플러스 글로벌대장장이액티브",
+    "categoryKey": "unclassified",
+    "marketSum": 231
+  },
+  {
+    "itemcode": "236350",
+    "name": "TIGER 인도니프티50레버리지(합성)",
+    "categoryKey": "leverage",
+    "marketSum": 230
+  },
+  {
+    "itemcode": "440340",
+    "name": "TIGER 글로벌멀티에셋TIF액티브",
+    "categoryKey": "tdf",
+    "marketSum": 229
+  },
+  {
+    "itemcode": "185680",
+    "name": "KODEX 미국S&P바이오(합성)",
+    "categoryKey": "bio",
+    "marketSum": 226
+  },
+  {
+    "itemcode": "0174B0",
+    "name": "KoAct 글로벌AI메모리반도체액티브",
+    "categoryKey": "semi",
+    "marketSum": 225
+  },
+  {
+    "itemcode": "169950",
+    "name": "KODEX 차이나A50",
+    "categoryKey": "china",
+    "marketSum": 225
+  },
+  {
+    "itemcode": "0026E0",
+    "name": "KODEX 미국S&P500버퍼3월액티브",
+    "categoryKey": "us",
+    "marketSum": 222
+  },
+  {
+    "itemcode": "0049K0",
+    "name": "ACE 미국배당퀄리티채권혼합50",
+    "categoryKey": "mixed",
+    "marketSum": 220
+  },
+  {
+    "itemcode": "464920",
+    "name": "PLUS 일본반도체소부장",
+    "categoryKey": "semi",
+    "marketSum": 220
+  },
+  {
+    "itemcode": "489000",
+    "name": "PLUS 일본엔화초단기국채(합성)",
+    "categoryKey": "currency",
+    "marketSum": 216
+  },
+  {
+    "itemcode": "0115C0",
+    "name": "RISE 미국고배당다우존스TOP10",
+    "categoryKey": "dividend",
+    "marketSum": 211
+  },
+  {
+    "itemcode": "396510",
+    "name": "TIGER 차이나클린에너지SOLACTIVE",
+    "categoryKey": "china",
+    "marketSum": 210
+  },
+  {
+    "itemcode": "332620",
+    "name": "PLUS 미국장기우량회사채",
+    "categoryKey": "bond_kr",
+    "marketSum": 206
+  },
+  {
+    "itemcode": "461910",
+    "name": "PLUS 미국테크TOP10레버리지(합성)",
+    "categoryKey": "leverage",
+    "marketSum": 202
+  },
+  {
+    "itemcode": "477490",
+    "name": "에셋플러스 글로벌일등기업포커스10액티브",
+    "categoryKey": "developed",
+    "marketSum": 198
+  },
+  {
+    "itemcode": "469050",
+    "name": "RISE 미국반도체NYSE(H)",
+    "categoryKey": "semi",
+    "marketSum": 198
+  },
+  {
+    "itemcode": "461900",
+    "name": "PLUS 미국테크TOP10",
+    "categoryKey": "it_global",
+    "marketSum": 198
+  },
+  {
+    "itemcode": "371450",
+    "name": "TIGER 글로벌클라우드컴퓨팅INDXX",
+    "categoryKey": "ai_infra",
+    "marketSum": 197
+  },
+  {
+    "itemcode": "0084E0",
+    "name": "KIWOOM 미국대형주500월간목표헤지액티브",
+    "categoryKey": "tdf",
+    "marketSum": 196
+  },
+  {
+    "itemcode": "0028X0",
+    "name": "KODEX 미국금융테크액티브",
+    "categoryKey": "it_kr",
+    "marketSum": 187
+  },
+  {
+    "itemcode": "0067Y0",
+    "name": "TIGER 차이나AI소프트웨어",
+    "categoryKey": "china",
+    "marketSum": 186
+  },
+  {
+    "itemcode": "468370",
+    "name": "KODEX iShares미국인플레이션국채액티브",
+    "categoryKey": "bond_kr",
+    "marketSum": 185
+  },
+  {
+    "itemcode": "0018Z0",
+    "name": "RISE 미국양자컴퓨팅",
+    "categoryKey": "quantum",
+    "marketSum": 185
+  },
+  {
+    "itemcode": "453820",
+    "name": "KODEX 인도Nifty50레버리지(합성)",
+    "categoryKey": "leverage",
+    "marketSum": 183
+  },
+  {
+    "itemcode": "291130",
+    "name": "ACE MSCI멕시코(합성)",
+    "categoryKey": "em",
+    "marketSum": 181
+  },
+  {
+    "itemcode": "213630",
+    "name": "PLUS 미국다우존스고배당주(합성 H)",
+    "categoryKey": "dividend",
+    "marketSum": 181
+  },
+  {
+    "itemcode": "0181L0",
+    "name": "SOL 미국우주항공TOP10",
+    "categoryKey": "defense",
+    "marketSum": 181
+  },
+  {
+    "itemcode": "0015F0",
+    "name": "KIWOOM 팔란티어미국30년국채혼합액티브(H)",
+    "categoryKey": "mixed",
+    "marketSum": 178
+  },
+  {
+    "itemcode": "276000",
+    "name": "TIGER 글로벌자원생산기업(합성 H)",
+    "categoryKey": "commodity",
+    "marketSum": 176
+  },
+  {
+    "itemcode": "494420",
+    "name": "PLUS 미국배당증가성장주데일리커버드콜",
+    "categoryKey": "coveredcall",
+    "marketSum": 176
+  },
+  {
+    "itemcode": "460660",
+    "name": "RISE 미국S&P배당킹",
+    "categoryKey": "dividend",
+    "marketSum": 175
+  },
+  {
+    "itemcode": "250730",
+    "name": "RISE 차이나HSCEI(H)",
+    "categoryKey": "china",
+    "marketSum": 173
+  },
+  {
+    "itemcode": "104520",
+    "name": "KIWOOM 블루칩",
+    "categoryKey": "developed",
+    "marketSum": 171
+  },
+  {
+    "itemcode": "0164G0",
+    "name": "RISE 차이나AI반도체TOP4Plus",
+    "categoryKey": "semi",
+    "marketSum": 171
+  },
+  {
+    "itemcode": "371150",
+    "name": "RISE 차이나항셍테크",
+    "categoryKey": "china",
+    "marketSum": 170
+  },
+  {
+    "itemcode": "469160",
+    "name": "ACE 일본반도체",
+    "categoryKey": "semi",
+    "marketSum": 169
+  },
+  {
+    "itemcode": "400570",
+    "name": "KODEX 유럽탄소배출권선물ICE(H)",
+    "categoryKey": "esg",
+    "marketSum": 169
+  },
+  {
+    "itemcode": "474920",
+    "name": "에셋플러스 차이나일등기업포커스10액티브",
+    "categoryKey": "china",
+    "marketSum": 168
+  },
+  {
+    "itemcode": "453630",
+    "name": "KODEX 미국S&P500필수소비재",
+    "categoryKey": "kculture",
+    "marketSum": 166
+  },
+  {
+    "itemcode": "195920",
+    "name": "TIGER 일본TOPIX(합성 H)",
+    "categoryKey": "developed",
+    "marketSum": 163
+  },
+  {
+    "itemcode": "225060",
+    "name": "TIGER 이머징마켓MSCI레버리지(합성 H)",
+    "categoryKey": "leverage",
+    "marketSum": 161
+  },
+  {
+    "itemcode": "280320",
+    "name": "ACE 미국IT인터넷(합성 H)",
+    "categoryKey": "it_global",
+    "marketSum": 160
+  },
+  {
+    "itemcode": "0013P0",
+    "name": "RISE 미국은행TOP10",
+    "categoryKey": "finance",
+    "marketSum": 159
+  },
+  {
+    "itemcode": "265690",
+    "name": "ACE 러시아MSCI(합성)",
+    "categoryKey": "em",
+    "marketSum": 158
+  },
+  {
+    "itemcode": "0000H0",
+    "name": "KODEX 인도Nifty미드캡100",
+    "categoryKey": "em",
+    "marketSum": 157
+  },
+  {
+    "itemcode": "432840",
+    "name": "HANARO 미국S&P500",
+    "categoryKey": "us",
+    "marketSum": 157
+  },
+  {
+    "itemcode": "354350",
+    "name": "HANARO 글로벌럭셔리S&P(합성)",
+    "categoryKey": "kculture",
+    "marketSum": 156
+  },
+  {
+    "itemcode": "0094L0",
+    "name": "RISE 차이나테크TOP10위클리타겟커버드콜",
+    "categoryKey": "coveredcall",
+    "marketSum": 155
+  },
+  {
+    "itemcode": "463640",
+    "name": "KODEX 미국S&P500유틸리티",
+    "categoryKey": "power_infra",
+    "marketSum": 155
+  },
+  {
+    "itemcode": "419420",
+    "name": "KODEX 미국클린에너지나스닥",
+    "categoryKey": "energy",
+    "marketSum": 154
+  },
+  {
+    "itemcode": "417450",
+    "name": "RISE 글로벌수소경제",
+    "categoryKey": "power_infra",
+    "marketSum": 150
+  },
+  {
+    "itemcode": "0113G0",
+    "name": "KoAct 미국바이오헬스케어액티브",
+    "categoryKey": "bio",
+    "marketSum": 149
+  },
+  {
+    "itemcode": "409810",
+    "name": "KODEX 미국나스닥100선물인버스(H)",
+    "categoryKey": "inverse",
+    "marketSum": 149
+  },
+  {
+    "itemcode": "416090",
+    "name": "ACE 중국과창판STAR50",
+    "categoryKey": "china",
+    "marketSum": 145
+  },
+  {
+    "itemcode": "0127V0",
+    "name": "KIWOOM 미국S&P500 TOP10&배당다우비중전환",
+    "categoryKey": "tdf",
+    "marketSum": 141
+  },
+  {
+    "itemcode": "354240",
+    "name": "RISE 미국고정배당우선증권",
+    "categoryKey": "dividend",
+    "marketSum": 139
+  },
+  {
+    "itemcode": "371870",
+    "name": "ACE 차이나항셍테크",
+    "categoryKey": "china",
+    "marketSum": 139
+  },
+  {
+    "itemcode": "435040",
+    "name": "ACE 글로벌브랜드TOP10",
+    "categoryKey": "developed",
+    "marketSum": 136
+  },
+  {
+    "itemcode": "428560",
+    "name": "KODEX 미국ETF산업Top10 Indxx",
+    "categoryKey": "us",
+    "marketSum": 135
+  },
+  {
+    "itemcode": "453660",
+    "name": "KODEX 미국S&P500경기소비재",
+    "categoryKey": "kculture",
+    "marketSum": 133
+  },
+  {
+    "itemcode": "269370",
+    "name": "TIGER S&P글로벌인프라(합성)",
+    "categoryKey": "industrial",
+    "marketSum": 132
+  },
+  {
+    "itemcode": "269530",
+    "name": "PLUS S&P글로벌인프라",
+    "categoryKey": "industrial",
+    "marketSum": 132
+  },
+  {
+    "itemcode": "0127T0",
+    "name": "KIWOOM 미국S&P500&배당다우존스비중전환",
+    "categoryKey": "tdf",
+    "marketSum": 132
+  },
+  {
+    "itemcode": "332610",
+    "name": "PLUS 미국단기회사채(AAA~A)",
+    "categoryKey": "currency",
+    "marketSum": 130
+  },
+  {
+    "itemcode": "494340",
+    "name": "ACE 글로벌AI맞춤형반도체",
+    "categoryKey": "semi",
+    "marketSum": 130
+  },
+  {
+    "itemcode": "465670",
+    "name": "TIGER 미국캐시카우100",
+    "categoryKey": "us",
+    "marketSum": 129
+  },
+  {
+    "itemcode": "261110",
+    "name": "TIGER 미국달러선물레버리지",
+    "categoryKey": "leverage",
+    "marketSum": 127
+  },
+  {
+    "itemcode": "0087F0",
+    "name": "ACE 차이나AI빅테크TOP2+액티브",
+    "categoryKey": "china",
+    "marketSum": 125
+  },
+  {
+    "itemcode": "0133E0",
+    "name": "TIGER 차이나증권",
+    "categoryKey": "china",
+    "marketSum": 123
+  },
+  {
+    "itemcode": "463690",
+    "name": "KODEX 미국S&P500커뮤니케이션",
+    "categoryKey": "it_global",
+    "marketSum": 121
+  },
+  {
+    "itemcode": "379790",
+    "name": "RISE 유로스탁스50(H)",
+    "categoryKey": "developed",
+    "marketSum": 120
+  },
+  {
+    "itemcode": "456250",
+    "name": "KODEX 유럽명품TOP10 STOXX",
+    "categoryKey": "kculture",
+    "marketSum": 119
+  },
+  {
+    "itemcode": "0004G0",
+    "name": "1Q 미국배당TOP30",
+    "categoryKey": "dividend",
+    "marketSum": 119
+  },
+  {
+    "itemcode": "0127R0",
+    "name": "RISE 미국AI클라우드인프라",
+    "categoryKey": "ai_infra",
+    "marketSum": 119
+  },
+  {
+    "itemcode": "0008E0",
+    "name": "ACE 미국중심중소형제조업",
+    "categoryKey": "industrial",
+    "marketSum": 118
+  },
+  {
+    "itemcode": "105010",
+    "name": "TIGER 라틴35",
+    "categoryKey": "em",
+    "marketSum": 117
+  },
+  {
+    "itemcode": "451150",
+    "name": "에셋플러스 글로벌영에이지액티브",
+    "categoryKey": "unclassified",
+    "marketSum": 115
+  },
+  {
+    "itemcode": "487910",
+    "name": "ACE 인도컨슈머파워액티브",
+    "categoryKey": "em",
+    "marketSum": 115
+  },
+  {
+    "itemcode": "310080",
+    "name": "RISE 중국MSCI China(H)",
+    "categoryKey": "china",
+    "marketSum": 114
+  },
+  {
+    "itemcode": "0047N0",
+    "name": "PLUS 차이나AI테크TOP10",
+    "categoryKey": "china",
+    "marketSum": 112
+  },
+  {
+    "itemcode": "399580",
+    "name": "RISE 글로벌클린에너지",
+    "categoryKey": "energy",
+    "marketSum": 111
+  },
+  {
+    "itemcode": "117690",
+    "name": "TIGER 차이나항셍30",
+    "categoryKey": "china",
+    "marketSum": 109
+  },
+  {
+    "itemcode": "460270",
+    "name": "KIWOOM 미국달러SOFR금리액티브(합성)",
+    "categoryKey": "currency",
+    "marketSum": 108
+  },
+  {
+    "itemcode": "489860",
+    "name": "KIWOOM 글로벌전력GRID인프라",
+    "categoryKey": "power_infra",
+    "marketSum": 108
+  },
+  {
+    "itemcode": "411860",
+    "name": "KIWOOM 독일DAX",
+    "categoryKey": "developed",
+    "marketSum": 106
+  },
+  {
+    "itemcode": "225800",
+    "name": "KIWOOM 미국달러선물레버리지",
+    "categoryKey": "leverage",
+    "marketSum": 106
+  },
+  {
+    "itemcode": "0166T0",
+    "name": "PLUS 글로벌저작권핵심기업액티브",
+    "categoryKey": "kculture",
+    "marketSum": 106
+  },
+  {
+    "itemcode": "0002C0",
+    "name": "에셋플러스 인도일등기업포커스20액티브",
+    "categoryKey": "developed",
+    "marketSum": 105
+  },
+  {
+    "itemcode": "488290",
+    "name": "MIDAS 일본테크액티브",
+    "categoryKey": "it_kr",
+    "marketSum": 104
+  },
+  {
+    "itemcode": "375270",
+    "name": "RISE 글로벌데이터센터리츠(합성)",
+    "categoryKey": "reits",
+    "marketSum": 102
+  },
+  {
+    "itemcode": "181480",
+    "name": "ACE 미국부동산리츠(합성 H)",
+    "categoryKey": "reits",
+    "marketSum": 101
+  },
+  {
+    "itemcode": "230480",
+    "name": "KIWOOM 미국달러선물인버스2X",
+    "categoryKey": "leverage",
+    "marketSum": 99
+  },
+  {
+    "itemcode": "0174R0",
+    "name": "KIWOOM 미국성장다우존스",
+    "categoryKey": "us",
+    "marketSum": 96
+  },
+  {
+    "itemcode": "390400",
+    "name": "KODEX 미국스마트모빌리티S&P",
+    "categoryKey": "auto",
+    "marketSum": 96
+  },
+  {
+    "itemcode": "215620",
+    "name": "HK S&P코리아로우볼",
+    "categoryKey": "dividend",
+    "marketSum": 95
+  },
+  {
+    "itemcode": "487920",
+    "name": "ACE 인도시장대표BIG5그룹액티브",
+    "categoryKey": "em",
+    "marketSum": 95
+  },
+  {
+    "itemcode": "429010",
+    "name": "TIGER 미국나스닥넥스트100",
+    "categoryKey": "us",
+    "marketSum": 95
+  },
+  {
+    "itemcode": "429980",
+    "name": "SOL 한국형글로벌전기차&2차전지액티브",
+    "categoryKey": "battery",
+    "marketSum": 92
+  },
+  {
+    "itemcode": "0082F0",
+    "name": "HANARO 유럽방산",
+    "categoryKey": "defense",
+    "marketSum": 92
+  },
+  {
+    "itemcode": "0102X0",
+    "name": "ACE 유럽방산TOP10",
+    "categoryKey": "defense",
+    "marketSum": 92
+  },
+  {
+    "itemcode": "0084D0",
+    "name": "KIWOOM 미국테크100월간목표헤지액티브",
+    "categoryKey": "tdf",
+    "marketSum": 92
+  },
+  {
+    "itemcode": "0036Z0",
+    "name": "RISE 미국천연가스밸류체인",
+    "categoryKey": "commodity",
+    "marketSum": 91
+  },
+  {
+    "itemcode": "437370",
+    "name": "RISE 글로벌농업경제",
+    "categoryKey": "commodity",
+    "marketSum": 90
+  },
+  {
+    "itemcode": "0005C0",
+    "name": "RISE 미국S&P500엔화노출(합성 H)",
+    "categoryKey": "us",
+    "marketSum": 90
+  },
+  {
+    "itemcode": "494210",
+    "name": "SOL 미국500타겟데일리커버드콜액티브",
+    "categoryKey": "coveredcall",
+    "marketSum": 90
+  },
+  {
+    "itemcode": "499150",
+    "name": "SOL 미국S&P500엔화노출(H)",
+    "categoryKey": "us",
+    "marketSum": 87
+  },
+  {
+    "itemcode": "256450",
+    "name": "PLUS 심천차이넥스트(합성)",
+    "categoryKey": "china",
+    "marketSum": 86
+  },
+  {
+    "itemcode": "497510",
+    "name": "ACE 글로벌빅파마",
+    "categoryKey": "bio",
+    "marketSum": 86
+  },
+  {
+    "itemcode": "219900",
+    "name": "ACE 중국본토CSI300레버리지(합성)",
+    "categoryKey": "leverage",
+    "marketSum": 83
+  },
+  {
+    "itemcode": "182490",
+    "name": "TIGER 단기선진하이일드(합성 H)",
+    "categoryKey": "currency",
+    "marketSum": 83
+  },
+  {
+    "itemcode": "0154H0",
+    "name": "KoAct 차이나바이오헬스케어액티브",
+    "categoryKey": "bio",
+    "marketSum": 83
+  },
+  {
+    "itemcode": "462340",
+    "name": "에셋플러스 글로벌다이나믹시니어액티브",
+    "categoryKey": "bio",
+    "marketSum": 82
+  },
+  {
+    "itemcode": "217780",
+    "name": "TIGER 차이나CSI300인버스(합성)",
+    "categoryKey": "inverse",
+    "marketSum": 77
+  },
+  {
+    "itemcode": "413220",
+    "name": "SOL 차이나태양광CSI(합성)",
+    "categoryKey": "power_infra",
+    "marketSum": 76
+  },
+  {
+    "itemcode": "0132D0",
+    "name": "KoAct 글로벌K컬처밸류체인액티브",
+    "categoryKey": "kculture",
+    "marketSum": 76
+  },
+  {
+    "itemcode": "488480",
+    "name": "RISE 일본섹터TOP4Plus",
+    "categoryKey": "developed",
+    "marketSum": 74
+  },
+  {
+    "itemcode": "189400",
+    "name": "PLUS 글로벌MSCI(합성 H)",
+    "categoryKey": "developed",
+    "marketSum": 73
+  },
+  {
+    "itemcode": "316300",
+    "name": "ACE 싱가포르리츠",
+    "categoryKey": "reits",
+    "marketSum": 73
+  },
+  {
+    "itemcode": "0078V0",
+    "name": "PLUS 미국로보택시",
+    "categoryKey": "auto",
+    "marketSum": 73
+  },
+  {
+    "itemcode": "0131A0",
+    "name": "SOL 차이나소비트렌드",
+    "categoryKey": "kculture",
+    "marketSum": 71
+  },
+  {
+    "itemcode": "304670",
+    "name": "KODEX 미국30년국채울트라선물인버스(H)",
+    "categoryKey": "inverse",
+    "marketSum": 71
+  },
+  {
+    "itemcode": "456200",
+    "name": "PLUS 미국달러SOFR금리액티브(합성)",
+    "categoryKey": "currency",
+    "marketSum": 70
+  },
+  {
+    "itemcode": "0073X0",
+    "name": "FOCUS 알리바바미국채커버드콜혼합",
+    "categoryKey": "coveredcall",
+    "marketSum": 70
+  },
+  {
+    "itemcode": "400590",
+    "name": "SOL 글로벌탄소배출권선물ICE(합성)",
+    "categoryKey": "esg",
+    "marketSum": 65
+  },
+  {
+    "itemcode": "0015E0",
+    "name": "KIWOOM 엔비디아미국30년국채혼합액티브(H)",
+    "categoryKey": "mixed",
+    "marketSum": 64
+  },
+  {
+    "itemcode": "139660",
+    "name": "KIWOOM 미국달러선물인버스",
+    "categoryKey": "inverse",
+    "marketSum": 63
+  },
+  {
+    "itemcode": "391600",
+    "name": "ACE 미국친환경그린테마",
+    "categoryKey": "esg",
+    "marketSum": 62
+  },
+  {
+    "itemcode": "0114X0",
+    "name": "RISE 글로벌게임테크TOP3Plus",
+    "categoryKey": "kculture",
+    "marketSum": 57
+  },
+  {
+    "itemcode": "0128D0",
+    "name": "PLUS 차이나항셍테크위클리타겟커버드콜",
+    "categoryKey": "coveredcall",
+    "marketSum": 57
+  },
+  {
+    "itemcode": "220130",
+    "name": "SOL 차이나강소기업CSI500(합성 H)",
+    "categoryKey": "china",
+    "marketSum": 57
+  },
+  {
+    "itemcode": "469530",
+    "name": "RISE 미국달러선물인버스",
+    "categoryKey": "inverse",
+    "marketSum": 56
+  },
+  {
+    "itemcode": "267450",
+    "name": "RISE 미국장기국채선물인버스(H)",
+    "categoryKey": "inverse",
+    "marketSum": 54
+  },
+  {
+    "itemcode": "483240",
+    "name": "TIGER 미국나스닥100ETF선물",
+    "categoryKey": "us",
+    "marketSum": 54
+  },
+  {
+    "itemcode": "401590",
+    "name": "HANARO 글로벌탄소배출권선물ICE(합성)",
+    "categoryKey": "esg",
+    "marketSum": 53
+  },
+  {
+    "itemcode": "261920",
+    "name": "ACE MSCI필리핀(합성)",
+    "categoryKey": "em",
+    "marketSum": 53
+  },
+  {
+    "itemcode": "291890",
+    "name": "KODEX MSCI EM선물(H)",
+    "categoryKey": "em",
+    "marketSum": 53
+  },
+  {
+    "itemcode": "400580",
+    "name": "SOL 유럽탄소배출권선물S&P(H)",
+    "categoryKey": "esg",
+    "marketSum": 53
+  },
+  {
+    "itemcode": "225030",
+    "name": "TIGER 미국S&P500선물인버스(H)",
+    "categoryKey": "inverse",
+    "marketSum": 52
+  },
+  {
+    "itemcode": "498610",
+    "name": "RISE 인도디지털성장",
+    "categoryKey": "em",
+    "marketSum": 51
+  },
+  {
+    "itemcode": "476310",
+    "name": "RISE 글로벌비만산업TOP2+",
+    "categoryKey": "bio",
+    "marketSum": 51
+  },
+  {
+    "itemcode": "483030",
+    "name": "KIWOOM 미국블록버스터바이오테크의약품+",
+    "categoryKey": "bio",
+    "marketSum": 50
+  },
+  {
+    "itemcode": "267440",
+    "name": "RISE 미국장기국채선물(H)",
+    "categoryKey": "bond_kr",
+    "marketSum": 50
+  },
+  {
+    "itemcode": "205720",
+    "name": "ACE 일본TOPIX인버스(합성 H)",
+    "categoryKey": "inverse",
+    "marketSum": 49
+  },
+  {
+    "itemcode": "0015K0",
+    "name": "TIGER 미국소비트렌드액티브",
+    "categoryKey": "kculture",
+    "marketSum": 48
+  },
+  {
+    "itemcode": "373790",
+    "name": "KIWOOM 미국방어배당성장나스닥",
+    "categoryKey": "dividend",
+    "marketSum": 46
+  },
+  {
+    "itemcode": "490330",
+    "name": "KoAct 미국치매&뇌질환치료제액티브",
+    "categoryKey": "bio",
+    "marketSum": 45
+  },
+  {
+    "itemcode": "0050E0",
+    "name": "PLUS 미국AI에이전트",
+    "categoryKey": "ai_infra",
+    "marketSum": 43
+  },
+  {
+    "itemcode": "225050",
+    "name": "TIGER 유로스탁스레버리지(합성 H)",
+    "categoryKey": "leverage",
+    "marketSum": 43
+  },
+  {
+    "itemcode": "291680",
+    "name": "RISE 차이나H선물인버스(H)",
+    "categoryKey": "inverse",
+    "marketSum": 38
+  },
+  {
+    "itemcode": "267490",
+    "name": "RISE 미국장기국채선물레버리지(합성 H)",
+    "categoryKey": "leverage",
+    "marketSum": 38
+  },
+  {
+    "itemcode": "454180",
+    "name": "KIWOOM 차이나내수소비TOP CSI",
+    "categoryKey": "kculture",
+    "marketSum": 35
+  },
+  {
+    "itemcode": "491630",
+    "name": "RISE 미국반도체인버스(합성 H)",
+    "categoryKey": "inverse",
+    "marketSum": 35
+  },
+  {
+    "itemcode": "424460",
+    "name": "HANARO 글로벌워터MSCI(합성)",
+    "categoryKey": "esg",
+    "marketSum": 33
+  },
+  {
+    "itemcode": "489010",
+    "name": "PLUS 글로벌AI인프라",
+    "categoryKey": "ai_infra",
+    "marketSum": 30
+  },
+  {
+    "itemcode": "465620",
+    "name": "ACE 미국빅테크TOP7 Plus인버스(합성)",
+    "categoryKey": "inverse",
+    "marketSum": 17
+  }
+]

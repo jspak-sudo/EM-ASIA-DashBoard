@@ -1,0 +1,30 @@
+# 환경변수 (API 키 — 절대 커밋 금지)
+.env
+.env.*
+
+# 의존성
+node_modules/
+
+# 빌드
+dist/
+server/dist/
+
+# 로그
+*.log
+logs/
+server.log
+
+# 임시 파일
+temp_*.json
+temp_*.html
+scratch/
+
+# 런타임 캐시 (서버 자동 생성)
+data/
+etfs.json
+r.json
+top100.json
+
+# OS
+.DS_Store
+Thumbs.db

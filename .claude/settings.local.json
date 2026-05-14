@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Read",
+      "Write",
+      "Edit",
+      "WebSearch",
+      "PowerShell",
+      "mcp__Claude_Preview__preview_start",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__3d062acd-357f-4e16-96d9-463e91e8c479__morningstar-id-lookup-tool",
+      "WebFetch(domain:localhost)",
+      "WebFetch(domain:timeetf.co.kr)",
+      "mcp__3d062acd-357f-4e16-96d9-463e91e8c479__morningstar-data-tool",
+      "WebFetch(domain:www.morningstar.com)",
+      "mcp__3d062acd-357f-4e16-96d9-463e91e8c479__morningstar-fund-holdings-tool",
+      "WebFetch(domain:www.etfrc.com)",
+      "WebFetch(domain:api.etfrc.com)",
+      "mcp__Claude_in_Chrome__browser_batch",
+      "mcp__Claude_in_Chrome__list_connected_browsers",
+      "mcp__Claude_in_Chrome__select_browser",
+      "mcp__3d062acd-357f-4e16-96d9-463e91e8c479__morningstar-portfolio-analysis-tool",
+      "WebFetch(domain:finance.naver.com)"
+    ]
+  }
+}
