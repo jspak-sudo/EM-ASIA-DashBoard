@@ -114,8 +114,33 @@ async function main() {
   snap['__avgcaps__'] = avgcaps;
   console.log(` ✅ ${Object.keys(avgcaps).length}개`);
 
-  // ── 5. HTML 생성 ────────────────────────────────────────────────────────────
-  console.log('\n[5/5] HTML 생성');
+  // ── 5. 보유종목 전체 수집 ───────────────────────────────────────────────────
+  console.log('\n[5/6] 보유종목 전체 수집');
+  const holdings: Record<string, any> = {};
+  const CONCURRENCY = 8; // 동시 요청 수
+  let done = 0;
+  process.stdout.write(`  홀딩스 ${codes.length}개 `);
+
+  for (let i = 0; i < codes.length; i += CONCURRENCY) {
+    const chunk = codes.slice(i, i + CONCURRENCY);
+    await Promise.all(chunk.map(async code => {
+      try {
+        const r = await get(`${BASE}/api/funds/naver/holdings/${code}`, 30000);
+        if (r && (r.holdings?.length > 0 || r.weightedAvgMarketCap != null)) {
+          holdings[code] = r;
+        }
+        done++;
+        if (done % 50 === 0) process.stdout.write('.');
+      } catch {
+        done++;
+      }
+    }));
+  }
+  snap['__holdings__'] = holdings;
+  console.log(` ✅ ${Object.keys(holdings).length}개`);
+
+  // ── 6. HTML 생성 ────────────────────────────────────────────────────────────
+  console.log('\n[6/6] HTML 생성');
 
   const now = new Date().toLocaleString('ko-KR', {
     timeZone: 'Asia/Seoul', hour12: false,
@@ -133,8 +158,47 @@ async function main() {
 window.__SNAPSHOT__ = ${JSON.stringify(snap).replace(/<\/script>/gi, '<\\/script>').replace(/<!--/g, '<\\!--')};
 window.__SNAPSHOT_TIME__ = '${now}';
 
+// ── 폴리필: AbortSignal.timeout / AbortSignal.any ────────────────────────────
+// Chrome 103+ / Safari 16+ 미만 구형 모바일 대응
+if (typeof AbortSignal !== 'undefined') {
+  if (!AbortSignal.timeout) {
+    AbortSignal.timeout = function(ms) {
+      const ctrl = new AbortController();
+      const id = setTimeout(function() {
+        try { ctrl.abort(new DOMException('signal timed out', 'TimeoutError')); } catch(e) { ctrl.abort(); }
+      }, ms);
+      ctrl.signal.addEventListener('abort', function() { clearTimeout(id); }, { once: true });
+      return ctrl.signal;
+    };
+  }
+  if (!AbortSignal.any) {
+    AbortSignal.any = function(signals) {
+      const ctrl = new AbortController();
+      for (let i = 0; i < signals.length; i++) {
+        const s = signals[i];
+        if (s && s.aborted) { try { ctrl.abort(s.reason); } catch(e) { ctrl.abort(); } return ctrl.signal; }
+        if (s) s.addEventListener('abort', function() { try { ctrl.abort(s.reason); } catch(e) { ctrl.abort(); } }, { once: true });
+      }
+      return ctrl.signal;
+    };
+  }
+}
+
 (function() {
   const snap = window.__SNAPSHOT__;
+
+  // new Response() 없이도 동작하는 mock 생성 (구형 모바일 대응)
+  function mockResponse(data) {
+    var json = typeof data === 'string' ? data : JSON.stringify(data);
+    return {
+      ok: true,
+      status: 200,
+      headers: { get: function() { return 'application/json'; } },
+      json: function() { return Promise.resolve(JSON.parse(json)); },
+      text: function() { return Promise.resolve(json); },
+      clone: function() { return mockResponse(data); }
+    };
+  }
 
   window.fetch = async function(url, opts) {
     const u = String(url).replace(/^https?:\\/\\/localhost:\\d+/, '');
@@ -144,96 +208,91 @@ window.__SNAPSHOT_TIME__ = '${now}';
 
     // ── 정확한 경로 매칭 ─────────────────────────────
     if (snap[u] !== undefined) {
-      return new Response(JSON.stringify(snap[u]), {
-        status: 200, headers: { 'Content-Type': 'application/json' }
-      });
+      return mockResponse(snap[u]);
     }
 
     // ── /api/stocks ─────────────────────────────────
     if (basePath === '/api/stocks') {
       const key = '/api/stocks?market=' + (qp.get('market') || 'us');
-      return new Response(JSON.stringify(snap[key] || []), {
-        status: 200, headers: { 'Content-Type': 'application/json' }
-      });
+      return mockResponse(snap[key] || []);
     }
 
     // ── ETF 목록 ────────────────────────────────────
     if (basePath === '/api/funds/naver/list' || basePath === '/api/funds/naver') {
       const full = snap['/api/funds/naver/list'];
-      if (!full) return new Response(JSON.stringify({ results: [], total: 0 }), {
-        status: 200, headers: { 'Content-Type': 'application/json' }
-      });
+      if (!full) return mockResponse({ results: [], total: 0 });
 
-      let results = [...(full.results || [])];
+      let results = (full.results || []).slice();
       const cat  = qp.get('categoryKey');
       const q    = qp.get('q');
       const sort = qp.get('sort') || 'marketSum';
-      const lim  = parseInt(qp.get('limit') || '50');
+      const lim  = parseInt(qp.get('limit') || '50', 10);
 
       if (cat === 'new_this_month') {
-        results = results.filter(r => r.isNew);
+        results = results.filter(function(r) { return r.isNew; });
       } else if (cat) {
-        results = results.filter(r => r.categoryKey === cat);
+        results = results.filter(function(r) { return r.categoryKey === cat; });
       }
       if (q) {
         const ql = q.toLowerCase().replace(/\\s/g, '');
-        results = results.filter(r =>
-          r.name.toLowerCase().replace(/\\s/g, '').includes(ql) ||
-          r.itemcode.startsWith(q)
-        );
+        results = results.filter(function(r) {
+          return r.name.toLowerCase().replace(/\\s/g, '').indexOf(ql) >= 0 ||
+                 r.itemcode.indexOf(q) === 0;
+        });
       }
-      if (sort === 'changeRate') results.sort((a, b) => b.changeRate - a.changeRate);
-      else if (sort === 'threeMonthReturn') results.sort((a, b) => b.threeMonthReturn - a.threeMonthReturn);
-      else results.sort((a, b) => b.marketSum - a.marketSum);
+      if (sort === 'changeRate') results.sort(function(a, b) { return b.changeRate - a.changeRate; });
+      else if (sort === 'threeMonthReturn') results.sort(function(a, b) { return b.threeMonthReturn - a.threeMonthReturn; });
+      else results.sort(function(a, b) { return b.marketSum - a.marketSum; });
 
-      return new Response(JSON.stringify({
+      return mockResponse({
         results: results.slice(0, lim),
         total: results.length,
         categoryCounts: full.categoryCounts,
         categoryMarketSums: full.categoryMarketSums,
         totalMarketSum: full.totalMarketSum,
-      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      });
     }
 
     // ── 수익률 ──────────────────────────────────────
     if (basePath === '/api/funds/naver/returns') {
       const codes = (qp.get('codes') || '').split(',').filter(Boolean);
-      const data: Record<string, any> = {};
-      for (const c of codes) if (snap.__returns__?.[c]) data[c] = snap.__returns__[c];
-      return new Response(JSON.stringify(data), {
-        status: 200, headers: { 'Content-Type': 'application/json' }
-      });
+      const data = {};
+      for (let i = 0; i < codes.length; i++) {
+        const c = codes[i];
+        if (snap.__returns__ && snap.__returns__[c]) data[c] = snap.__returns__[c];
+      }
+      return mockResponse(data);
     }
 
     // ── 평균시총 ────────────────────────────────────
     if (basePath === '/api/funds/naver/avgcaps') {
       const codes = (qp.get('codes') || '').split(',').filter(Boolean);
-      const data: Record<string, any> = {};
-      for (const c of codes) if (snap.__avgcaps__?.[c]) data[c] = snap.__avgcaps__[c];
-      return new Response(JSON.stringify(data), {
-        status: 200, headers: { 'Content-Type': 'application/json' }
-      });
+      const data = {};
+      for (let i = 0; i < codes.length; i++) {
+        const c = codes[i];
+        if (snap.__avgcaps__ && snap.__avgcaps__[c]) data[c] = snap.__avgcaps__[c];
+      }
+      return mockResponse(data);
     }
 
-    // ── 홀딩스 (스냅샷 미지원) ──────────────────────
-    if (basePath.startsWith('/api/funds/naver/holdings')) {
-      return new Response(JSON.stringify({
+    // ── 홀딩스 ──────────────────────────────────────
+    if (basePath.indexOf('/api/funds/naver/holdings') === 0) {
+      const code = basePath.split('/').pop() || '';
+      const h = snap.__holdings__ && snap.__holdings__[code];
+      if (h) return mockResponse(h);
+      return mockResponse({
         holdings: [], weightedAvgMarketCap: null,
-        _snapshotNote: '스냅샷 버전에서는 종목 상세가 지원되지 않습니다.'
-      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        _snapshotNote: '보유종목 데이터 없음'
+      });
     }
 
     // ── 검색 (빈 결과 반환) ─────────────────────────
-    if (u.includes('/search')) {
-      return new Response(JSON.stringify({ results: [], total: 0 }), {
-        status: 200, headers: { 'Content-Type': 'application/json' }
-      });
+    if (u.indexOf('/search') >= 0) {
+      return mockResponse({ results: [], total: 0 });
     }
 
     // ── 기타 ────────────────────────────────────────
-    return new Response(JSON.stringify({}), {
-      status: 200, headers: { 'Content-Type': 'application/json' }
-    });
+    return mockResponse({});
   };
 })();
 </script>`;

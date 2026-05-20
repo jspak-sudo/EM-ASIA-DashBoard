@@ -2215,11 +2215,74 @@ let _naverReturnsData = {};
 // === Funds Tab ===
 let _fundsLastQuery = '';
 let _naverTabActive = ['none'];  // 초기 상태: 아무것도 선택 안 됨 (대기)
-let _naverSearchQuery = '';
+let _naverSearchQuery = '';       // 현재 입력 중인 텍스트 (라이브 필터)
+let _naverSearchChips = [];       // 확정된 검색 칩 배열
+
+function _renderEtfSearchChips() {
+  const c = document.getElementById('etfSearchChips');
+  if (!c) return;
+  if (_naverSearchChips.length === 0) { c.innerHTML = ''; c.classList.add('hidden'); return; }
+  c.classList.remove('hidden');
+  c.innerHTML = _naverSearchChips.map((t, i) =>
+    `<span class="inline-flex items-center gap-1 bg-[#043b72] text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">
+      ${t.replace(/</g,'&lt;')}
+      <button onclick="removeEtfSearchChip(${i})" class="hover:bg-white/20 rounded-full w-4 h-4 flex items-center justify-center text-[10px] leading-none" title="제거">×</button>
+    </span>`
+  ).join('') +
+  `<button onclick="clearEtfSearchChips()" class="text-[10px] text-gray-500 hover:text-red-500 ml-1 underline">모두 지우기</button>`;
+}
+
+function _addEtfChips(text) {
+  const parts = String(text || '').split(/[,;\n]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+  let added = 0;
+  for (const p of parts) {
+    if (!_naverSearchChips.includes(p)) { _naverSearchChips.push(p); added++; }
+  }
+  return added;
+}
+
+function removeEtfSearchChip(idx) {
+  _naverSearchChips.splice(idx, 1);
+  _renderEtfSearchChips();
+  applyNaverFilter(_naverTabActive, _naverSort);
+}
+
+function clearEtfSearchChips() {
+  _naverSearchChips = [];
+  _renderEtfSearchChips();
+  applyNaverFilter(_naverTabActive, _naverSort);
+}
 
 function handleEtfSearch(val) {
-  _naverSearchQuery = val.trim().toLowerCase();
+  // 콤마 입력 시 즉시 칩으로 변환
+  if (/[,;\n]/.test(val)) {
+    _addEtfChips(val);
+    const input = document.getElementById('etfSearchInput');
+    if (input) input.value = '';
+    _naverSearchQuery = '';
+    _renderEtfSearchChips();
+  } else {
+    _naverSearchQuery = val.trim().toLowerCase();
+  }
   applyNaverFilter(_naverTabActive, _naverSort);
+}
+
+function handleEtfSearchKeydown(ev) {
+  const input = ev.target;
+  if (ev.key === 'Enter') {
+    ev.preventDefault();
+    if (input.value.trim()) {
+      _addEtfChips(input.value);
+      input.value = '';
+      _naverSearchQuery = '';
+      _renderEtfSearchChips();
+      applyNaverFilter(_naverTabActive, _naverSort);
+    }
+  } else if (ev.key === 'Backspace' && !input.value && _naverSearchChips.length > 0) {
+    _naverSearchChips.pop();
+    _renderEtfSearchChips();
+    applyNaverFilter(_naverTabActive, _naverSort);
+  }
 }
 
 async function handleStockSearch(q) {
@@ -2290,13 +2353,14 @@ function renderFundsTab() {
       <div id="naverTabContainer" class="flex gap-2 mb-8 flex-wrap items-center"></div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 p-6 bg-gray-50 rounded-2xl border border-gray-100">
         <div class="space-y-2">
-          <label class="text-[10px] font-bold text-[#043b72] uppercase ml-1">ETF 검색</label>
+          <label class="text-[10px] font-bold text-[#043b72] uppercase ml-1">ETF 검색 <span class="text-gray-400 normal-case font-normal">(콤마/엔터로 여러 개 검색)</span></label>
           <div class="relative group">
             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#e37500] transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </span>
-            <input type="text" id="etfSearchInput" placeholder="ETF명 또는 코드 필터링" class="bg-white border-2 border-gray-200 text-gray-900 text-sm rounded-xl py-3 pl-11 pr-4 w-full focus:outline-none focus:border-[#e37500] transition-all placeholder-gray-400 font-medium shadow-sm" oninput="handleEtfSearch(this.value)">
+            <input type="text" id="etfSearchInput" placeholder="예: TIGER, KODEX, 반도체" class="bg-white border-2 border-gray-200 text-gray-900 text-sm rounded-xl py-3 pl-11 pr-4 w-full focus:outline-none focus:border-[#e37500] transition-all placeholder-gray-400 font-medium shadow-sm" oninput="handleEtfSearch(this.value)" onkeydown="handleEtfSearchKeydown(event)">
           </div>
+          <div id="etfSearchChips" class="hidden flex flex-wrap gap-1.5 mt-1 px-1"></div>
         </div>
         <div class="space-y-2">
           <label class="text-[10px] font-bold text-[#043b72] uppercase ml-1">구성종목으로 찾기</label>
@@ -2347,7 +2411,7 @@ function applyNaverFilter(activeKeys, sort) {
   const listEl = document.getElementById('naverEtfList');
   if (!listEl) return;
   const isOnlyNone = activeKeys.length === 1 && activeKeys[0] === 'none';
-  if (isOnlyNone && !_naverSearchQuery) {
+  if (isOnlyNone && !_naverSearchQuery && _naverSearchChips.length === 0) {
     listEl.innerHTML = `<div class="py-20 text-center"><p class="text-[#043b72] text-sm font-bold">ETF명 또는 코드를 입력하여 검색해주세요</p><p class="text-gray-500 text-xs mt-1">다른 검색어를 사용하여 다시 시도해주세요</p></div>`;
     return;
   }
@@ -2356,13 +2420,15 @@ function applyNaverFilter(activeKeys, sort) {
     return;
   }
   let items = [..._allNaverEtfs];
-  if (_naverSearchQuery) {
-    const q = _naverSearchQuery.toLowerCase();
+  // 칩 + 현재 입력값을 모두 OR 조건으로 매칭
+  const queries = [..._naverSearchChips];
+  if (_naverSearchQuery) queries.push(_naverSearchQuery);
+  if (queries.length > 0) {
     items = items.filter(i => {
       const nm = (i.name || i.itemname || '').toLowerCase();
       const cd = (i.itemcode || '').toLowerCase();
       const tk = (i.ticker || '').toLowerCase();
-      return nm.includes(q) || cd.includes(q) || tk.includes(q);
+      return queries.some(q => nm.includes(q) || cd.includes(q) || tk.includes(q));
     });
   }
   if (!activeKeys.includes('') && !activeKeys.includes('none') && !activeKeys.includes('custom_search')) {
@@ -6441,6 +6507,7 @@ function _fedColor(key, val) {
   if (val === null || val === undefined) return 'text-gray-400';
   const v = Number(val);
   const LOW_GOOD = {   // 낮을수록 좋음
+    // 미국
     cpi:      [[2.5,'text-green-400'],[3.5,'text-yellow-400'],[Infinity,'text-red-400']],
     core_cpi: [[2.5,'text-green-400'],[3.5,'text-yellow-400'],[Infinity,'text-red-400']],
     pce:      [[2.3,'text-green-400'],[3.0,'text-yellow-400'],[Infinity,'text-red-400']],
@@ -6448,14 +6515,28 @@ function _fedColor(key, val) {
     unrate:   [[4.0,'text-green-400'],[5.0,'text-yellow-400'],[Infinity,'text-red-400']],
     icsa:     [[220,'text-green-400'],[280,'text-yellow-400'],[Infinity,'text-red-400']],
     mortgage: [[5.5,'text-green-400'],[7.0,'text-yellow-400'],[Infinity,'text-red-400']],
+    // 한국
+    kr_cpi:    [[2.5,'text-green-400'],[4.0,'text-yellow-400'],[Infinity,'text-red-400']],
+    kr_unrate: [[3.5,'text-green-400'],[5.0,'text-yellow-400'],[Infinity,'text-red-400']],
+    // 중국
+    cn_cpi:    [[2.5,'text-green-400'],[4.0,'text-yellow-400'],[Infinity,'text-red-400']],
   };
   const HIGH_GOOD = {  // 높을수록 좋음
+    // 미국
     payems:   [[200,'text-green-400'],[100,'text-yellow-400'],[0,'text-orange-400'],[[-Infinity],'text-red-400']],
     gdp:      [[2.0,'text-green-400'],[0.5,'text-yellow-400'],[[-Infinity],'text-red-400']],
     cfnai:    [[0.5,'text-green-400'],[0,'text-yellow-400'],[-0.7,'text-orange-400'],[[-Infinity],'text-red-400']],
     retail:   [[3.0,'text-green-400'],[1.0,'text-yellow-400'],[0,'text-orange-400'],[[-Infinity],'text-red-400']],
     sentiment:[[80,'text-green-400'],[70,'text-yellow-400'],[60,'text-orange-400'],[[-Infinity],'text-red-400']],
     housing:  [[1400,'text-green-400'],[1200,'text-yellow-400'],[[-Infinity],'text-orange-400']],
+    // 한국
+    kr_ip:     [[3.0,'text-green-400'],[0,'text-yellow-400'],[[-Infinity],'text-red-400']],
+    kr_export: [[5.0,'text-green-400'],[0,'text-yellow-400'],[[-Infinity],'text-red-400']],
+    kr_gdp:    [[2.0,'text-green-400'],[0.5,'text-yellow-400'],[[-Infinity],'text-red-400']],
+    kr_retail: [[3.0,'text-green-400'],[0,'text-yellow-400'],[[-Infinity],'text-red-400']],
+    // 중국
+    cn_export: [[5.0,'text-green-400'],[0,'text-yellow-400'],[[-Infinity],'text-red-400']],
+    cn_import: [[3.0,'text-green-400'],[0,'text-yellow-400'],[[-Infinity],'text-red-400']],
   };
   if (LOW_GOOD[key]) {
     for (const [thr, cls] of LOW_GOOD[key]) { if (v <= thr) return cls; }
@@ -6497,7 +6578,7 @@ function _changeBadge(key, current, prior) {
   const absDiff = Math.abs(diff);
   const fmt = absDiff < 0.1 ? diff.toFixed(2) : absDiff < 10 ? diff.toFixed(1) : diff.toFixed(0);
   // 방향별 좋음/나쁨 판단
-  const LOW_GOOD_KEYS = new Set(['cpi','core_cpi','pce','core_pce','unrate','icsa','mortgage']);
+  const LOW_GOOD_KEYS = new Set(['cpi','core_cpi','pce','core_pce','unrate','icsa','mortgage','kr_cpi','kr_unrate','cn_cpi']);
   const isGood = LOW_GOOD_KEYS.has(key) ? diff < 0 : diff > 0;
   const color = diff === 0 ? 'text-gray-400' : (isGood ? 'text-green-400' : 'text-red-400');
   const arrow = diff > 0.005 ? '▲' : diff < -0.005 ? '▼' : '━';
@@ -6551,19 +6632,47 @@ function _fedSection(title, icon, keys, indicators) {
 }
 
 // ── 메인 렌더 함수 ────────────────────────────────────────────────────────────
+function _countryHeader(flag, title, subtitle) {
+  return `<div class="flex items-center gap-2 mb-3">
+    <span class="text-xl">${flag}</span>
+    <div>
+      <h3 class="text-sm font-bold text-white">${title}</h3>
+      <p class="text-[11px] text-gray-500">${subtitle}</p>
+    </div>
+  </div>`;
+}
+
+function _summaryBar(keys, ind) {
+  return `<div class="card px-4 py-3 mb-4">
+    <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center">
+      ${keys.map(k => {
+        const i = ind[k];
+        if (!i) return `<div><div class="text-[10px] text-gray-500 truncate">${k}</div><div class="text-gray-600 text-xs">—</div></div>`;
+        const v = i.current?.value;
+        const vStr = v === null ? '—' : (v < 100 ? v.toFixed(2)+' '+i.unit : v.toFixed(1)+' '+i.unit);
+        const col = _fedColor(k, v);
+        return `<div class="cursor-default" title="${i.desc}">
+          <div class="text-[10px] text-gray-500 truncate">${i.nameko}</div>
+          <div class="text-[13px] font-bold ${col}">${vStr}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
 function renderFed(data) {
-  const ind = data.indicators || {};
+  const ind    = data.indicators    || {};
+  const kr_ind = data.kr_indicators || {};
+  const cn_ind = data.cn_indicators || {};
   const fetchedAt = data.fetchedAt ? new Date(data.fetchedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour12: false }).replace('T',' ') : '';
 
-  const html = `<div class="space-y-4">
-    <!-- 헤더 -->
+  const html = `<div class="space-y-6">
+
+    <!-- ═══ 공통 헤더 ═══ -->
     <div class="card px-4 py-3 flex flex-wrap items-center justify-between gap-2">
-      <div class="flex items-center gap-2">
-        <span class="text-lg">🇺🇸</span>
-        <div>
-          <h2 class="text-sm font-bold text-white">미국 주요 경제지표</h2>
-          <p class="text-[11px] text-gray-400">FRED (Federal Reserve Bank of St. Louis) · 6시간 캐시</p>
-        </div>
+      <div>
+        <h2 class="text-sm font-bold text-white">주요국 경제지표</h2>
+        <p class="text-[11px] text-gray-400">FRED (Federal Reserve Bank of St. Louis) · OECD · 6시간 캐시</p>
       </div>
       <div class="flex items-center gap-3">
         <span class="text-[11px] text-gray-500">업데이트: ${fetchedAt}</span>
@@ -6575,36 +6684,60 @@ function renderFed(data) {
       </div>
     </div>
 
-    <!-- 핵심 요약 바 -->
-    <div class="card px-4 py-3">
-      <div class="grid grid-cols-4 sm:grid-cols-7 gap-2 text-center">
-        ${['cpi','core_pce','unrate','payems','gdp','cfnai','mortgage'].map(k => {
-          const i = ind[k];
-          if (!i) return `<div><div class="text-[10px] text-gray-500">${k}</div><div class="text-gray-600 text-xs">—</div></div>`;
-          const v = i.current?.value;
-          const vStr = v === null ? '—' : (k === 'payems' ? (v>0?'+':'')+v.toFixed(0)+'k' : v < 100 ? v.toFixed(2)+' '+i.unit : v.toFixed(1)+' '+i.unit);
-          const col = _fedColor(k, v);
-          return `<div class="cursor-default" title="${i.desc}">
-            <div class="text-[10px] text-gray-500 truncate">${i.nameko}</div>
-            <div class="text-[13px] font-bold ${col}">${vStr}</div>
-          </div>`;
-        }).join('')}
+    <!-- ═══ 🇺🇸 미국 ═══ -->
+    <div class="space-y-3">
+      ${_countryHeader('🇺🇸', '미국 주요 경제지표', 'FRED · CPI·PCE는 YoY% · NFP는 MoM(천명) · GDP는 QoQ 연율')}
+
+      <!-- 미국 요약 바 -->
+      <div class="card px-4 py-3">
+        <div class="grid grid-cols-4 sm:grid-cols-7 gap-2 text-center">
+          ${['cpi','core_pce','unrate','payems','gdp','cfnai','mortgage'].map(k => {
+            const i = ind[k];
+            if (!i) return `<div><div class="text-[10px] text-gray-500">${k}</div><div class="text-gray-600 text-xs">—</div></div>`;
+            const v = i.current?.value;
+            const vStr = v === null ? '—' : (k === 'payems' ? (v>0?'+':'')+v.toFixed(0)+'k' : v < 100 ? v.toFixed(2)+' '+i.unit : v.toFixed(1)+' '+i.unit);
+            const col = _fedColor(k, v);
+            return `<div class="cursor-default" title="${i.desc}">
+              <div class="text-[10px] text-gray-500 truncate">${i.nameko}</div>
+              <div class="text-[13px] font-bold ${col}">${vStr}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- 미국 섹션 그리드 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        ${_fedSection('인플레이션', '🔥', ['cpi','core_cpi','pce','core_pce'], ind)}
+        ${_fedSection('고용', '👷', ['unrate','payems','icsa'], ind)}
+        ${_fedSection('성장', '📈', ['gdp','cfnai','retail'], ind)}
+        ${_fedSection('소비 · 주택', '🏠', ['sentiment','housing','mortgage'], ind)}
       </div>
     </div>
 
-    <!-- 섹션 그리드 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      ${_fedSection('인플레이션', '🔥', ['cpi','core_cpi','pce','core_pce'], ind)}
-      ${_fedSection('고용', '👷', ['unrate','payems','icsa'], ind)}
-      ${_fedSection('성장', '📈', ['gdp','cfnai','retail'], ind)}
-      ${_fedSection('소비 · 주택', '🏠', ['sentiment','housing','mortgage'], ind)}
+    <!-- ═══ 🇰🇷 한국 ═══ -->
+    <div class="space-y-3">
+      ${_countryHeader('🇰🇷', '한국 주요 경제지표', 'FRED·OECD · CPI·산업생산·수출은 YoY% · GDP는 QoQ%')}
+      ${_summaryBar(['kr_cpi','kr_unrate','kr_ip','kr_export','kr_gdp','kr_retail'], kr_ind)}
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        ${_fedSection('물가 · 고용', '📊', ['kr_cpi','kr_unrate'], kr_ind)}
+        ${_fedSection('성장 · 무역', '📦', ['kr_gdp','kr_ip','kr_export','kr_retail'], kr_ind)}
+      </div>
+    </div>
+
+    <!-- ═══ 🇨🇳 중국 ═══ -->
+    <div class="space-y-3">
+      ${_countryHeader('🇨🇳', '중국 주요 경제지표', 'FRED·OECD · CPI·수출·수입은 YoY% · IP·GDP는 FRED 미제공')}
+      ${_summaryBar(['cn_cpi','cn_export','cn_import'], cn_ind)}
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        ${_fedSection('물가 · 무역', '📦', ['cn_cpi','cn_export','cn_import'], cn_ind)}
+      </div>
     </div>
 
     <!-- 주석 -->
     <div class="card px-4 py-3 text-[11px] text-gray-500 space-y-0.5">
-      <p>• CPI·PCE·소매판매는 전년동월비(YoY%) · NFP는 전월 증감(MoM, 천명) · GDP는 QoQ 연율 환산</p>
-      <p>• 색상 기준: <span class="text-green-400">초록=양호</span> / <span class="text-yellow-400">노랑=주의</span> / <span class="text-red-400">빨강=경고</span> — ISM PMI 50 이상=제조업 확장</p>
-      <p>• 출처: <a href="https://fred.stlouisfed.org" target="_blank" class="text-blue-400 hover:underline">FRED (Federal Reserve Bank of St. Louis)</a></p>
+      <p>• 색상 기준: <span class="text-green-400">초록=양호</span> / <span class="text-yellow-400">노랑=주의</span> / <span class="text-red-400">빨강=경고</span></p>
+      <p>• 한국 실업률 기준: 3.5% 이하=양호 / 중국 GDP 기준: 4.5% 이상=양호</p>
+      <p>• 출처: <a href="https://fred.stlouisfed.org" target="_blank" class="text-blue-400 hover:underline">FRED</a> · OECD Main Economic Indicators</p>
     </div>
   </div>`;
 

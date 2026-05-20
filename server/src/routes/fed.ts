@@ -85,7 +85,7 @@ function applyMoMabs(raw: FredObs[]): FredObs[] {
 
 // ── 시리즈 정의 ───────────────────────────────────────────────────────────────
 type Transform = 'none' | 'yoy' | 'mom_abs';
-type Group = 'inflation' | 'labor' | 'growth' | 'consumer';
+type Group = 'inflation' | 'labor' | 'growth' | 'consumer' | 'kr_macro' | 'cn_macro';
 
 interface SeriesDef {
   id: string;
@@ -187,6 +187,71 @@ const SERIES: Record<string, SeriesDef> = {
   },
 };
 
+// ── 한국 시리즈 (OECD/FRED 검증된 시리즈) ────────────────────────────────────
+const KR_SERIES: Record<string, SeriesDef> = {
+  kr_cpi: {
+    id: 'KORCPIALLMINMEI', name: 'Korea CPI', nameko: '소비자물가(CPI)',
+    unit: 'YoY%', freq: '월간', group: 'kr_macro',
+    desc: 'CPI 전년동월비',
+    transform: 'yoy', fetchLimit: 84, sparkPoints: 36,
+  },
+  kr_unrate: {
+    id: 'LRUNTTTTKRM156S', name: 'Korea Unemployment', nameko: '실업률',
+    unit: '%', freq: '월간', group: 'kr_macro',
+    desc: '실업률 (OECD 조화 기준, SA)',
+    transform: 'none', fetchLimit: 48, sparkPoints: 36,
+  },
+  kr_ip: {
+    // KORPRINTO01GYSAM: Growth rate vs same period previous year (already YoY%)
+    id: 'KORPRINTO01GYSAM', name: 'Korea IP', nameko: '산업생산',
+    unit: 'YoY%', freq: '월간', group: 'kr_macro',
+    desc: '산업생산 전년동월비 (건설업 제외)',
+    transform: 'none', fetchLimit: 48, sparkPoints: 36,
+  },
+  kr_export: {
+    id: 'XTEXVA01KRM664S', name: 'Korea Exports', nameko: '수출',
+    unit: 'YoY%', freq: '월간', group: 'kr_macro',
+    desc: '수출금액 전년동월비',
+    transform: 'yoy', fetchLimit: 84, sparkPoints: 36,
+  },
+  kr_gdp: {
+    // KORGDPRQPSMEI: QoQ % change, seasonally adjusted (already %)
+    id: 'KORGDPRQPSMEI', name: 'Korea GDP', nameko: '실질 GDP',
+    unit: '% QoQ', freq: '분기', group: 'kr_macro',
+    desc: '실질 GDP 성장률 (전분기비, SA)',
+    transform: 'none', fetchLimit: 24, sparkPoints: 20,
+  },
+  kr_retail: {
+    // KORSLRTTO01GYSAM: Growth rate vs same period previous year (already YoY%)
+    id: 'KORSLRTTO01GYSAM', name: 'Korea Retail', nameko: '소매판매',
+    unit: 'YoY%', freq: '월간', group: 'kr_macro',
+    desc: '소매판매 전년동월비 (거래량 기준)',
+    transform: 'none', fetchLimit: 48, sparkPoints: 36,
+  },
+};
+
+// ── 중국 시리즈 (FRED에서 최신 데이터 확인된 시리즈만) ────────────────────────
+const CN_SERIES: Record<string, SeriesDef> = {
+  cn_cpi: {
+    id: 'CHNCPIALLMINMEI', name: 'China CPI', nameko: '소비자물가(CPI)',
+    unit: 'YoY%', freq: '월간', group: 'cn_macro',
+    desc: 'CPI 전년동월비 (OECD MEI)',
+    transform: 'yoy', fetchLimit: 84, sparkPoints: 36,
+  },
+  cn_export: {
+    id: 'XTEXVA01CNM664S', name: 'China Exports', nameko: '수출',
+    unit: 'YoY%', freq: '월간', group: 'cn_macro',
+    desc: '수출금액 전년동월비',
+    transform: 'yoy', fetchLimit: 84, sparkPoints: 36,
+  },
+  cn_import: {
+    id: 'VALIMPCNM052N', name: 'China Imports', nameko: '수입',
+    unit: 'YoY%', freq: '월간', group: 'cn_macro',
+    desc: '수입금액 전년동월비',
+    transform: 'yoy', fetchLimit: 84, sparkPoints: 36,
+  },
+};
+
 // ── 캐시 ─────────────────────────────────────────────────────────────────────
 const CACHE_DIR = join(process.cwd(), '..', 'data');
 const CACHE_FILE = join(CACHE_DIR, 'fed_indicators.json');
@@ -243,54 +308,52 @@ async function buildFedData() {
     return results;
   }
 
-  const entries = Object.entries(SERIES);
-  const tasks = entries.map(([key, def]) => async () => {
-    const raw = await fetchFredSeries(def.id, def.fetchLimit);
-
-    // scale 적용 (ICSA 등 단위 변환)
-    const scaledRaw = def.scale
-      ? raw.map(d => ({ ...d, value: d.value !== null ? +(d.value * def.scale!).toFixed(3) : null }))
-      : raw;
-
-    let transformed: FredObs[];
-    if (def.transform === 'yoy') transformed = applyYoY(scaledRaw);
-    else if (def.transform === 'mom_abs') transformed = applyMoMabs(scaledRaw);
-    else transformed = scaledRaw.filter(d => d.value !== null);
-
-    if (transformed.length === 0) return { key, result: null };
-
-    const history = transformed.slice(-def.sparkPoints);
-    const current = transformed[transformed.length - 1];
-    const prior   = transformed.length >= 2 ? transformed[transformed.length - 2] : null;
-
-    return {
-      key,
-      result: {
-        name: def.name,
-        nameko: def.nameko,
-        unit: def.unit,
-        freq: def.freq,
-        group: def.group,
-        desc: def.desc,
-        current,
-        prior,
-        history,
-      },
+  // 공통 시리즈 fetch 함수
+  function makeTask(key: string, def: SeriesDef) {
+    return async () => {
+      const raw = await fetchFredSeries(def.id, def.fetchLimit);
+      const scaledRaw = def.scale
+        ? raw.map(d => ({ ...d, value: d.value !== null ? +(d.value * def.scale!).toFixed(3) : null }))
+        : raw;
+      let transformed: FredObs[];
+      if (def.transform === 'yoy') transformed = applyYoY(scaledRaw);
+      else if (def.transform === 'mom_abs') transformed = applyMoMabs(scaledRaw);
+      else transformed = scaledRaw.filter(d => d.value !== null);
+      if (transformed.length === 0) return { key, result: null };
+      const history = transformed.slice(-def.sparkPoints);
+      const current = transformed[transformed.length - 1];
+      const prior   = transformed.length >= 2 ? transformed[transformed.length - 2] : null;
+      return {
+        key,
+        result: { name: def.name, nameko: def.nameko, unit: def.unit, freq: def.freq, group: def.group, desc: def.desc, current, prior, history },
+      };
     };
-  });
+  }
 
-  const settled = await pLimit(tasks, 4);
+  const allTasks = [
+    ...Object.entries(SERIES).map(([k, d]) => makeTask(k, d)),
+    ...Object.entries(KR_SERIES).map(([k, d]) => makeTask(k, d)),
+    ...Object.entries(CN_SERIES).map(([k, d]) => makeTask(k, d)),
+  ];
+
+  const settled = await pLimit(allTasks, 4);
 
   const indicators: Record<string, any> = {};
+  const kr_indicators: Record<string, any> = {};
+  const cn_indicators: Record<string, any> = {};
+
   for (const r of settled) {
     if (r.status === 'fulfilled' && r.value?.result) {
-      indicators[r.value.key] = r.value.result;
+      const { key, result } = r.value;
+      if (key.startsWith('kr_')) kr_indicators[key] = result;
+      else if (key.startsWith('cn_')) cn_indicators[key] = result;
+      else indicators[key] = result;
     } else if (r.status === 'rejected') {
       console.warn('[fed] fetch failed:', (r as any).reason?.message || r);
     }
   }
 
-  return { indicators, fetchedAt: new Date().toISOString() };
+  return { indicators, kr_indicators, cn_indicators, fetchedAt: new Date().toISOString() };
 }
 
 // ── 캐시 워밍업 ───────────────────────────────────────────────────────────────
