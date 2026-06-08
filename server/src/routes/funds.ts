@@ -1123,6 +1123,41 @@ async function getStockCodeMap(): Promise<Record<string, string>> {
   return map;
 }
 
+/** WiseReport에서 ETF 전체 구성종목 추출 (이름+비중+주식수, 코드 없음 - 50~200개 전체 제공) */
+async function fetchWiseReportHoldings(itemcode: string): Promise<HoldingInfo[]> {
+  try {
+    const url = `https://navercomp.wisereport.co.kr/v2/ETF/index.aspx?cmp_cd=${itemcode}&target=cu_more`;
+    const referer = `https://finance.naver.com/item/coinfo.naver?code=${itemcode}&target=cu_more`;
+    const html = await fetchPageUtf8(url, referer);
+
+    const gridIdx = html.indexOf('"grid_data":[');
+    if (gridIdx < 0) return [];
+
+    const arrayBody = html.slice(gridIdx + '"grid_data":['.length);
+    const itemMatches = arrayBody.match(/\{[^}]+\}/g) || [];
+    const out: HoldingInfo[] = [];
+
+    for (const item of itemMatches) {
+      const nmM  = item.match(/"STK_NM_KOR"\s*:\s*"([^"]+)"/);
+      const wtM  = item.match(/"ETF_WEIGHT"\s*:\s*([\d.]+)/);
+      const shM  = item.match(/"AGMT_STK_CNT"\s*:\s*([\d.]+)/);
+      if (!nmM) continue;
+      const name = nmM[1].trim();
+      if (name.includes('현금') || name.toLowerCase().includes('cash')) continue;
+      out.push({
+        code: '',
+        name,
+        weight: wtM ? parseFloat(wtM[1]) : 0,
+        shares: shM ? Math.round(parseFloat(shM[1])) : undefined,
+        marketCapBillion: null,
+      });
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 /** Naver mobile ETF 분석 API에서 top10 보유종목 추출 (코드+이름+주식수+비중) */
 async function fetchNaverEtfAnalysis(itemcode: string): Promise<HoldingInfo[]> {
   try {
@@ -1159,9 +1194,18 @@ async function fetchNaverEtfAnalysis(itemcode: string): Promise<HoldingInfo[]> {
   }
 }
 
-/** ETF 전체 구성종목 추출 (KR ETF는 Naver 단독, TIME ETF는 xlsx 사용) */
-async function fetchETFHoldingsFull(itemcode: string): Promise<{ h: HoldingInfo[]; source: string }> {
-  const cached = _holdingsFullCache[itemcode];
+/** ETF 전체 구성종목 추출 (하이브리드)
+ *  - opts.expand=false (기본): Naver top10만, 실패 시 WR 폴백 (빠름)
+ *  - opts.expand=true: Naver top10 + WR 전체 머지 (느리지만 11위 이하까지 모두)
+ */
+async function fetchETFHoldingsFull(
+  itemcode: string,
+  opts?: { expand?: boolean }
+): Promise<{ h: HoldingInfo[]; source: string }> {
+  const expand = opts?.expand === true;
+  const cacheKey = expand ? `${itemcode}__expand` : itemcode;
+
+  const cached = _holdingsFullCache[cacheKey];
   if (cached && Date.now() - cached.ts < HOLDINGS_TTL) return { h: cached.h, source: cached.source || 'naver' };
 
   // 1차: TIME ETF 공식 xlsx (비중 포함, 해외종목도 커버 - Bloomberg 티커)
@@ -1175,22 +1219,46 @@ async function fetchETFHoldingsFull(itemcode: string): Promise<{ h: HoldingInfo[
         shares: h.shares,
         marketCapBillion: null,
       }));
-      _holdingsFullCache[itemcode] = { h: holdings, ts: Date.now(), source: 'time-etf' };
+      _holdingsFullCache[cacheKey] = { h: holdings, ts: Date.now(), source: 'time-etf' };
       return { h: holdings, source: 'time-etf' };
     }
   }
 
-  // 2차: Naver mobile ETF analysis API (국내 ETF 전용, 단일종목 ETF도 작동)
-  // 이 API는 top10만 제공하지만 종목코드를 직접 포함 → 시총 매칭 정확도 ↑
+  // 2차: Naver mobile ETF analysis API (top10, 빠름, 코드 포함)
   const naverHoldings = await fetchNaverEtfAnalysis(itemcode);
-  if (naverHoldings.length > 0) {
-    _holdingsFullCache[itemcode] = { h: naverHoldings, ts: Date.now(), source: 'naver-etf' };
+
+  // 빠른 경로: expand=false이고 Naver가 충분히 데이터 줬으면 그대로 반환
+  if (!expand && naverHoldings.length >= 5) {
+    _holdingsFullCache[cacheKey] = { h: naverHoldings, ts: Date.now(), source: 'naver-etf' };
     return { h: naverHoldings, source: 'naver-etf' };
   }
 
-  // 폴백 없음 → 빈 결과
-  _holdingsFullCache[itemcode] = { h: [], ts: Date.now(), source: 'naver-etf' };
-  return { h: [], source: 'naver-etf' };
+  // 3차: WiseReport (전체 50~200개, 느림)
+  const wrHoldings = await fetchWiseReportHoldings(itemcode);
+
+  if (wrHoldings.length > 0) {
+    // Naver top10이 있으면 코드 매핑 활용 (WR은 코드 없음)
+    const nameToCode: Record<string, string> = {};
+    for (const n of naverHoldings) if (n.code && n.name) nameToCode[n.name] = n.code;
+
+    const merged: HoldingInfo[] = wrHoldings.map(h => ({
+      ...h,
+      code: h.code || nameToCode[h.name] || '',
+    }));
+
+    // Naver top10에는 있는데 WR에 없는 종목 보강 (드물지만 가능)
+    for (const n of naverHoldings) {
+      if (!merged.find(m => m.name === n.name)) merged.push(n);
+    }
+
+    const source = expand ? 'naver+wr' : 'wisereport';
+    _holdingsFullCache[cacheKey] = { h: merged, ts: Date.now(), source };
+    return { h: merged, source };
+  }
+
+  // 모든 소스 실패 시 Naver 결과(빈/소량)라도 반환
+  _holdingsFullCache[cacheKey] = { h: naverHoldings, ts: Date.now(), source: 'naver-etf' };
+  return { h: naverHoldings, source: 'naver-etf' };
 }
 
 /** 네이버 ETF 메인페이지에서 구성종목 상위 10개 추출 (종목코드 포함, avgcap용) */
@@ -1665,8 +1733,9 @@ router.get('/naver/holdings/:itemcode', async (req: Request, res: Response) => {
 
     // 1) wisereport 전체 구성종목 (이름+비중, 코드 없음)
     // 2) Naver 상위 10개 (코드 있음, 시총 조회용)
+    const expand = req.query.expand === '1' || req.query.expand === 'true' || req.query.full === '1';
     const [ { h: fullHoldings, source }, top10 ] = await Promise.all([
-      fetchETFHoldingsFull(itemcode),
+      fetchETFHoldingsFull(itemcode, { expand }),
       fetchETFHoldingsTop10(itemcode),
     ]);
 

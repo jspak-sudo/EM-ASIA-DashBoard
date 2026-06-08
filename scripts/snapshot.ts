@@ -125,7 +125,8 @@ async function main() {
     const chunk = codes.slice(i, i + CONCURRENCY);
     await Promise.all(chunk.map(async code => {
       try {
-        const r = await get(`${BASE}/api/funds/naver/holdings/${code}`, 30000);
+        // expand=1 → 전체 보유종목 (WR 폴백 포함, GitHub Pages 모바일에서 full list 보임)
+        const r = await get(`${BASE}/api/funds/naver/holdings/${code}?expand=1`, 45000);
         if (r && (r.holdings?.length > 0 || r.weightedAvgMarketCap != null)) {
           holdings[code] = r;
         }
@@ -275,7 +276,7 @@ if (typeof AbortSignal !== 'undefined') {
       return mockResponse(data);
     }
 
-    // ── 홀딩스 ──────────────────────────────────────
+    // ── 홀딩스 (스냅샷은 expand=1 데이터만 저장 - 전체 종목) ──────────────────
     if (basePath.indexOf('/api/funds/naver/holdings') === 0) {
       const code = basePath.split('/').pop() || '';
       const h = snap.__holdings__ && snap.__holdings__[code];
@@ -289,6 +290,13 @@ if (typeof AbortSignal !== 'undefined') {
     // ── 검색 (빈 결과 반환) ─────────────────────────
     if (u.indexOf('/search') >= 0) {
       return mockResponse({ results: [], total: 0 });
+    }
+
+    // ── 백테스트 (스냅샷 미지원 - 로컬 서버 필요) ────
+    if (basePath === '/api/backtest') {
+      return mockResponse({
+        error: '백테스트 기능은 로컬 서버 (npm run dev)에서만 작동합니다.\\n실시간 계산이 필요한 기능이라 스냅샷에는 포함할 수 없습니다.'
+      });
     }
 
     // ── 기타 ────────────────────────────────────────

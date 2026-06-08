@@ -20,6 +20,7 @@ import stocksRouter from './routes/stocks.js';
 import factsetRouter from './routes/factset.js';
 import fedwatchRouter from './routes/fedwatch.js';
 import fedRouter from './routes/fed.js';
+import backtestRouter from './routes/backtest.js';
 
 const app = express();
 const PORT = 3002;
@@ -52,6 +53,7 @@ app.use('/api/factset', factsetRouter);
 app.use('/api/valuation', factsetRouter); // alias
 app.use('/api/fedwatch', fedwatchRouter);
 app.use('/api/fed', fedRouter);
+app.use('/api/backtest', backtestRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

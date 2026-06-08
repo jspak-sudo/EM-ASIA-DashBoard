@@ -156,6 +156,7 @@
       <button onclick="switchTab('liquidity')" id="tab-liquidity" class="py-4 px-1 text-[13px] tab-inactive whitespace-nowrap">유동성분석</button>
       <button onclick="switchTab('valuation')" id="tab-valuation" class="py-4 px-1 text-[13px] tab-inactive whitespace-nowrap">밸류에이션</button>
       <button onclick="switchTab('fed')" id="tab-fed" class="py-4 px-1 text-[13px] tab-inactive whitespace-nowrap">경제지표</button>
+      <button onclick="switchTab('backtest')" id="tab-backtest" class="py-4 px-1 text-[13px] tab-inactive whitespace-nowrap">📊 백테스트</button>
     </div>
   </div>
 
@@ -2069,7 +2070,7 @@ function switchTab(tab) {
   currentTab = tab;
   try { localStorage.setItem('dashboardCurrentTab', tab); } catch {}
   // 존재하는 탭 버튼만 안전하게 업데이트
-  const tabIds = ['overview','stocks','feargreed','vix','funds','liquidity','valuation','fed'];
+  const tabIds = ['overview','stocks','feargreed','vix','funds','liquidity','valuation','fed','backtest'];
   tabIds.forEach(id => {
     const el = document.getElementById('tab-' + id);
     if (el) el.className = 'py-4 px-1 text-[13px] whitespace-nowrap ' + (tab === id ? 'tab-active' : 'tab-inactive');
@@ -2198,6 +2199,10 @@ async function refresh() {
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('content').classList.remove('hidden');
       renderFed(fedData);
+    } else if (currentTab === 'backtest') {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('content').classList.remove('hidden');
+      renderBacktest();
     }
   } catch (err) {
     console.error('refresh failed:', err);
@@ -2846,7 +2851,7 @@ async function toggleHoldings(itemcode) {
   if (_holdingsLoaded[itemcode]) return; // ?? ??
   el.innerHTML = '<span class="text-gray-500">구성종목 & 시가총액 로딩 중..</span>';
   try {
-    const r = await fetch(`${API}/funds/naver/holdings/${itemcode}`, { signal: AbortSignal.timeout(30000) });
+    const r = await fetch(`${API}/funds/naver/holdings/${itemcode}?expand=1`, { signal: AbortSignal.timeout(45000) });
     if (!r.ok) throw new Error(r.status);
     const d = await r.json();
     _holdingsLoaded[itemcode] = true;
@@ -6744,6 +6749,275 @@ function renderFed(data) {
   document.getElementById('content').innerHTML = html;
 }
 window.renderFed = renderFed;
+
+// ════════════════════════════════════════════════════════════════════════════
+// 백테스트 탭
+// ════════════════════════════════════════════════════════════════════════════
+let _btState = {
+  symbol: '^IXIC',
+  period: '10y',
+  threshold: -3,
+};
+let _btChart = null;
+
+function renderBacktest() {
+  const el = document.getElementById('content');
+  // 컨테이너만 한번 렌더
+  if (!document.getElementById('backtestContainer')) {
+    el.innerHTML = `
+      <div id="backtestContainer" class="space-y-4">
+        <!-- 컨트롤 -->
+        <div class="card p-4">
+          <h2 class="text-sm font-bold text-white mb-3">📊 NASDAQ "-N% 회피·추가매수" 전략 백테스트</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="text-[10px] font-bold text-[#4a9eff] uppercase mb-1 block">지수</label>
+              <select id="btSymbol" class="w-full bg-[#0f1522] border border-[#2a334a] text-white rounded-lg px-3 py-2 text-sm">
+                <option value="^IXIC">NASDAQ (^IXIC)</option>
+                <option value="^GSPC">S&P 500 (^GSPC)</option>
+                <option value="^DJI">Dow Jones (^DJI)</option>
+                <option value="^KS11">KOSPI (^KS11)</option>
+                <option value="^KQ11">KOSDAQ (^KQ11)</option>
+                <option value="^N225">Nikkei 225 (^N225)</option>
+                <option value="000001.SS">상해종합 (000001.SS)</option>
+                <option value="^HSI">항셍 (^HSI)</option>
+                <option value="QQQ">QQQ (NASDAQ100 ETF)</option>
+                <option value="SPY">SPY (S&P500 ETF)</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-[#4a9eff] uppercase mb-1 block">기간</label>
+              <select id="btPeriod" class="w-full bg-[#0f1522] border border-[#2a334a] text-white rounded-lg px-3 py-2 text-sm">
+                <option value="1y">최근 1년</option>
+                <option value="3y">최근 3년</option>
+                <option value="5y">최근 5년</option>
+                <option value="10y" selected>최근 10년</option>
+                <option value="20y">최근 20년</option>
+                <option value="30y">최근 30년</option>
+                <option value="all">전체 (1985~)</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-[#4a9eff] uppercase mb-1 block">매도 임계값 (%)</label>
+              <select id="btThreshold" class="w-full bg-[#0f1522] border border-[#2a334a] text-white rounded-lg px-3 py-2 text-sm">
+                <option value="-2">-2% (민감)</option>
+                <option value="-2.5">-2.5%</option>
+                <option value="-3" selected>-3% (원전략)</option>
+                <option value="-4">-4%</option>
+                <option value="-5">-5% (둔감)</option>
+                <option value="-7">-7%</option>
+                <option value="-10">-10% (큰 폭락만)</option>
+              </select>
+            </div>
+          </div>
+          <div class="mt-3 flex gap-2 items-center">
+            <button onclick="runBacktest()" class="bg-[#e37500] hover:bg-[#ff8a1a] text-white text-sm font-bold px-6 py-2 rounded-lg transition-colors">▶ 백테스트 실행</button>
+            <span id="btStatus" class="text-[12px] text-gray-400"></span>
+          </div>
+        </div>
+
+        <!-- 결과 영역 -->
+        <div id="btResults"></div>
+      </div>`;
+    document.getElementById('btSymbol').value = _btState.symbol;
+    document.getElementById('btPeriod').value = _btState.period;
+    document.getElementById('btThreshold').value = _btState.threshold;
+    runBacktest();
+  }
+}
+window.renderBacktest = renderBacktest;
+
+async function runBacktest() {
+  const sym = document.getElementById('btSymbol').value;
+  const per = document.getElementById('btPeriod').value;
+  const thr = parseFloat(document.getElementById('btThreshold').value);
+  _btState = { symbol: sym, period: per, threshold: thr };
+
+  const status = document.getElementById('btStatus');
+  status.innerHTML = '⏳ 분석 중... (3~5초)';
+  document.getElementById('btResults').innerHTML = `<div class="card p-6 text-center text-gray-500"><div class="spinner mx-auto mb-3"></div>${sym} 데이터 로드 중...</div>`;
+
+  try {
+    const r = await fetch(`${API}/backtest?symbol=${encodeURIComponent(sym)}&period=${per}&threshold=${thr}`, { signal: AbortSignal.timeout(60000) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    renderBacktestResults(data);
+    status.innerHTML = `✅ 완료 (${data.meta.startDate} ~ ${data.meta.endDate}, ${data.meta.days}일, ${data.meta.years.toFixed(1)}년)`;
+  } catch (e) {
+    status.innerHTML = '<span class="text-red-400">❌ 실패: ' + (e.message || e) + '</span>';
+    document.getElementById('btResults').innerHTML = `<div class="card p-6 text-red-400 text-sm">${e.message || e}</div>`;
+  }
+}
+window.runBacktest = runBacktest;
+
+function _btFmt(n, dec = 2) { return n.toFixed(dec); }
+function _btCls(v, good, bad) { if (v == null) return ''; if (good(v)) return 'text-green-400 font-bold'; if (bad(v)) return 'text-red-400 font-bold'; return 'text-gray-300'; }
+
+function renderBacktestResults(data) {
+  const { meta, avoid, dip, recovery, equityChart, yearCount } = data;
+  const bh = avoid[0];
+
+  // 회피 전략 정렬 - CAGR/MDD 베스트 강조
+  const avoidSorted = avoid.slice(1).sort((a,b)=>b.cagr-a.cagr);
+  const bestCagr = avoidSorted[0];
+  const bestMdd = [...avoid.slice(1)].sort((a,b)=>Math.abs(a.mdd)-Math.abs(b.mdd))[0];
+
+  // 추가매수 베스트
+  const dipSorted = [...dip].sort((a,b)=>b.multiplier-a.multiplier);
+  const bestDip = dipSorted[0];
+
+  let html = `
+    <!-- 핵심 요약 -->
+    <div class="card p-5">
+      <h3 class="text-xs font-bold text-[#4a9eff] uppercase mb-3">📌 핵심 요약</h3>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div><div class="text-[10px] text-gray-500">Buy & Hold CAGR</div><div class="text-2xl font-bold text-[#e37500]">${_btFmt(bh.cagr)}%</div></div>
+        <div><div class="text-[10px] text-gray-500">Buy & Hold MDD</div><div class="text-2xl font-bold text-red-400">${_btFmt(bh.mdd, 1)}%</div></div>
+        <div><div class="text-[10px] text-gray-500">${meta.threshold}% 트리거 발생</div><div class="text-2xl font-bold text-white">${recovery.count}회</div></div>
+        <div><div class="text-[10px] text-gray-500">트리거/년</div><div class="text-2xl font-bold text-white">${(recovery.count / meta.years).toFixed(1)}</div></div>
+      </div>
+    </div>
+
+    <!-- 회복기간 -->
+    <div class="card p-5">
+      <h3 class="text-xs font-bold text-[#4a9eff] uppercase mb-3">🔍 ${meta.threshold}% 트리거 후 바닥 패턴</h3>
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3">
+        <div><div class="text-[10px] text-gray-500">바닥까지 (중앙값)</div><div class="text-xl font-bold text-white">${recovery.medianDaysToLow}일</div></div>
+        <div><div class="text-[10px] text-gray-500">바닥까지 (평균)</div><div class="text-xl font-bold text-white">${_btFmt(recovery.avgDaysToLow, 1)}일</div></div>
+        <div><div class="text-[10px] text-gray-500">추가하락 (중앙)</div><div class="text-xl font-bold text-red-400">${_btFmt(recovery.medianAdditionalDrop, 2)}%</div></div>
+        <div><div class="text-[10px] text-gray-500">당일 바닥 비율</div><div class="text-xl font-bold text-white">${_btFmt(recovery.pctImmediate, 0)}%</div></div>
+        <div><div class="text-[10px] text-gray-500">20일 내 바닥</div><div class="text-xl font-bold text-white">${_btFmt(recovery.pctWithin20, 0)}%</div></div>
+      </div>
+      <p class="text-[12px] text-gray-400">
+        해석: ${meta.threshold}% 발생 후 진짜 바닥까지 보통 <b class="text-white">${recovery.medianDaysToLow}일</b> 걸림. 당일이 바닥인 경우는 <b class="text-white">${_btFmt(recovery.pctImmediate, 0)}%</b>뿐이라 즉시 재진입은 평균 <b class="text-red-400">${_btFmt(recovery.medianAdditionalDrop, 1)}%</b> 추가 손실 위험.
+      </p>
+    </div>
+
+    <!-- 회피 전략 -->
+    <div class="card p-5">
+      <h3 class="text-xs font-bold text-[#4a9eff] uppercase mb-3">🎯 Q1. 회피 전략 비교 (${meta.threshold}% 매도 후 재진입 방식)</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-[12px]">
+          <thead><tr class="border-b border-[#2a334a]">
+            <th class="text-left py-2 px-2 text-gray-400 font-semibold">전략</th>
+            <th class="text-right py-2 px-2 text-gray-400 font-semibold">최종배수</th>
+            <th class="text-right py-2 px-2 text-gray-400 font-semibold">CAGR</th>
+            <th class="text-right py-2 px-2 text-gray-400 font-semibold">MDD</th>
+            <th class="text-right py-2 px-2 text-gray-400 font-semibold">거래</th>
+            <th class="text-right py-2 px-2 text-gray-400 font-semibold">vs B&H</th>
+          </tr></thead>
+          <tbody>
+            ${avoid.map((r, i) => {
+              const isBH = i === 0;
+              const vsBH = r.cagr - bh.cagr;
+              const highlight = !isBH && (r === bestCagr || r === bestMdd);
+              return `<tr class="border-b border-[#1f2738] ${isBH ? 'bg-[#1a2134] font-bold' : highlight ? 'bg-[#1a2c1f]' : ''}">
+                <td class="py-2 px-2 ${highlight && r === bestCagr ? 'text-green-400' : highlight && r === bestMdd ? 'text-blue-400' : ''}">${highlight && r === bestCagr ? '🏆 ' : highlight && r === bestMdd ? '🛡️ ' : ''}${r.label}</td>
+                <td class="text-right py-2 px-2">${_btFmt(r.finalEquity)}x</td>
+                <td class="text-right py-2 px-2 ${_btCls(vsBH, v=>v>0, v=>v<-1)}">${_btFmt(r.cagr)}%</td>
+                <td class="text-right py-2 px-2 ${_btCls(Math.abs(r.mdd)-Math.abs(bh.mdd), v=>v<-5, v=>v>5)}">${_btFmt(r.mdd, 1)}%</td>
+                <td class="text-right py-2 px-2 text-gray-400">${r.trades}</td>
+                <td class="text-right py-2 px-2 ${vsBH > 0 ? 'text-green-400' : vsBH < -1 ? 'text-red-400' : 'text-gray-500'}">${isBH ? '—' : (vsBH > 0 ? '+' : '') + _btFmt(vsBH) + '%p'}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <p class="text-[12px] text-gray-400 mt-3">
+        🏆 CAGR 1위: <b class="text-green-400">${bestCagr.label}</b> | 🛡️ MDD 최저: <b class="text-blue-400">${bestMdd.label}</b>
+      </p>
+    </div>
+
+    <!-- 추가매수 전략 -->
+    <div class="card p-5">
+      <h3 class="text-xs font-bold text-[#4a9eff] uppercase mb-3">💰 Q2. 추가매수(Dip Buying) 전략 비교</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-[12px]">
+          <thead><tr class="border-b border-[#2a334a]">
+            <th class="text-left py-2 px-2 text-gray-400 font-semibold">전략</th>
+            <th class="text-right py-2 px-2 text-gray-400 font-semibold">총 투자</th>
+            <th class="text-right py-2 px-2 text-gray-400 font-semibold">최종평가</th>
+            <th class="text-right py-2 px-2 text-gray-400 font-semibold">배수</th>
+            <th class="text-right py-2 px-2 text-gray-400 font-semibold">연환산수익</th>
+          </tr></thead>
+          <tbody>
+            ${dip.map(r => {
+              const isBest = r === bestDip;
+              return `<tr class="border-b border-[#1f2738] ${isBest ? 'bg-[#1a2c1f]' : ''}">
+                <td class="py-2 px-2 ${isBest ? 'text-green-400' : ''}">${isBest ? '🏆 ' : ''}${r.label}</td>
+                <td class="text-right py-2 px-2 text-gray-300">${(r.totalInvested/1e6).toFixed(0)}백만</td>
+                <td class="text-right py-2 px-2 text-white">${(r.finalValue/1e6).toFixed(0)}백만</td>
+                <td class="text-right py-2 px-2 font-bold ${isBest ? 'text-green-400' : 'text-white'}">${_btFmt(r.multiplier)}x</td>
+                <td class="text-right py-2 px-2 ${r.moneyWeightedAnnual > 0 ? 'text-green-400' : 'text-red-400'}">${_btFmt(r.moneyWeightedAnnual)}%</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <p class="text-[12px] text-gray-400 mt-3">
+        🏆 효율 1위: <b class="text-green-400">${bestDip.label}</b> (${_btFmt(bestDip.multiplier)}배)
+      </p>
+    </div>
+
+    <!-- 자산 변화 차트 -->
+    <div class="card p-5">
+      <h3 class="text-xs font-bold text-[#4a9eff] uppercase mb-3">📈 ${meta.symbol} 자산 추이 (B&H)</h3>
+      <canvas id="btChart" height="80"></canvas>
+    </div>
+
+    <!-- 연도별 트리거 -->
+    <div class="card p-5">
+      <h3 class="text-xs font-bold text-[#4a9eff] uppercase mb-3">📅 연도별 ${meta.threshold}% 발생 횟수</h3>
+      <canvas id="btYearChart" height="80"></canvas>
+    </div>
+  `;
+
+  document.getElementById('btResults').innerHTML = html;
+
+  // 차트 그리기
+  if (typeof Chart !== 'undefined') {
+    if (_btChart) try { _btChart.destroy(); } catch {}
+    const ctx = document.getElementById('btChart');
+    if (ctx) {
+      _btChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: equityChart.map(d => d.date),
+          datasets: [{ label: 'Buy & Hold', data: equityChart.map(d => d.v), borderColor: '#e37500', borderWidth: 2, pointRadius: 0, fill: false }],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: { ticks: { color: '#a0a8bc', maxTicksLimit: 10 } },
+            y: { ticks: { color: '#a0a8bc' }, title: { display: true, text: '자산 배수', color: '#a0a8bc' } },
+          },
+          plugins: { legend: { labels: { color: '#e8ebf2' } } },
+        },
+      });
+    }
+    const ctx2 = document.getElementById('btYearChart');
+    const years = Object.keys(yearCount).sort();
+    if (ctx2 && years.length > 0) {
+      new Chart(ctx2, {
+        type: 'bar',
+        data: { labels: years, datasets: [{ label: '발생 횟수', data: years.map(y => yearCount[y]), backgroundColor: '#f87171' }] },
+        options: {
+          responsive: true,
+          scales: { x: { ticks: { color: '#a0a8bc', maxTicksLimit: 20 } }, y: { ticks: { color: '#a0a8bc' } } },
+          plugins: { legend: { labels: { color: '#e8ebf2' } } },
+        },
+      });
+    }
+  }
+}
+
+// Chart.js 로드 (백테스트 탭에서만 필요)
+if (!window.Chart) {
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+  document.head.appendChild(s);
+}
 
 setInterval(refresh, 60000);
 
