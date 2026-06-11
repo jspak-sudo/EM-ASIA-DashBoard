@@ -2904,12 +2904,19 @@ async function toggleHoldings(itemcode) {
       <th class="text-left pb-1 pr-2 w-6 text-gray-600">#</th>
       <th class="text-left pb-1 pr-3">종목</th>
       <th class="text-right pb-1 pr-3">${col3Header}</th>
-      <th class="text-right pb-1">시총</th>
+      <th class="text-right pb-1 pr-3">시총</th>
+      <th class="text-right pb-1" title="비중 × 시총 (ETF가 보유한 해당 종목의 실제 가치 기여도)">기여(비중×시총)</th>
     </tr></thead><tbody>`;
 
     d.holdings.forEach((h2, idx) => {
       const capStr = fmtCap(h2.marketCapBillion);
       const cc = capCls(h2.marketCapBillion);
+      // 비중 × 시총 = 해당 종목이 ETF 평균시총에 기여하는 값 (억 단위)
+      const contrib = (h2.weight != null && h2.marketCapBillion != null)
+        ? (h2.weight / 100) * h2.marketCapBillion
+        : null;
+      const contribStr = fmtCap(contrib);
+      const contribCls = capCls(contrib);
       const nameEl = h2.code
         ? `<span class="text-gray-200">${h2.name}</span>
              <span class="text-gray-600 ml-1 text-[10px]">${h2.code}</span>`
@@ -2921,7 +2928,8 @@ async function toggleHoldings(itemcode) {
         <td class="py-0.5 pr-2 text-gray-600">${idx+1}</td>
         <td class="py-0.5 pr-3">${nameEl}</td>
         <td class="py-0.5 pr-3 text-right">${col3Val}</td>
-        <td class="py-0.5 text-right ${cc} font-medium">${capStr}</td>
+        <td class="py-0.5 pr-3 text-right ${cc} font-medium">${capStr}</td>
+        <td class="py-0.5 text-right ${contribCls}">${contribStr}</td>
       </tr>`;
     });
     h += '</tbody></table></div>';
