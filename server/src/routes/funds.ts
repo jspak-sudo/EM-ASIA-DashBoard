@@ -459,6 +459,12 @@ async function fetchYahooMarketCapKRW(ticker: string, currency: FxCurrency): Pro
     'AJRD':   140000, 'BWXT':  126000, 'VSAT':   28000,
     'ASTS':    84000, 'PL':     14000, 'RDW':     7000,
     'MNTS':     3500, 'ASTR':    1400, 'NARO':    2800,
+    // AI 광통신/네트워크
+    'NOK':    440000, 'COHR':   210000, 'LITE':   110000, 'CIEN':   170000,
+    'MRVL':   830000, 'AAOI':    20000, 'GLW':    620000, 'TSEM':    70000,
+    'CLS':    170000, 'FN':     110000, 'ANET':  1700000, 'JNPR':   180000,
+    'EXTR':    25000, 'INFN':    30000, 'VIAV':    25000, 'ALAB':   170000,
+    'CRDO':   110000,
     // 에너지/원자력 추가
     'CCJ':    700000, 'NNE':    280000, 'SMR':   140000, 'OKLO':   126000,
     'VST':   1400000, 'CEG':    840000, 'NRG':    420000,
@@ -865,6 +871,37 @@ const GLOBAL_TICKER_MAP: Record<string, { ticker: string; currency: FxCurrency }
   'EATON CORP PLC':               { ticker: 'ETN',   currency: 'USD' },
   'VERTIV HOLDINGS CO':           { ticker: 'VRT',   currency: 'USD' },
   'NORTHROP GRUMMAN CORP':        { ticker: 'NOC',   currency: 'USD' },
+  // AI 광통신/네트워크 (Naver/ETFCheck 영문명)
+  'Nokia Oyj':                    { ticker: 'NOK',   currency: 'USD' },
+  'NOKIA OYJ':                    { ticker: 'NOK',   currency: 'USD' },
+  'COHERENT CORP':                { ticker: 'COHR',  currency: 'USD' },
+  'Coherent Corp':                { ticker: 'COHR',  currency: 'USD' },
+  'Lumentum Holdings Inc':        { ticker: 'LITE',  currency: 'USD' },
+  'LUMENTUM HOLDINGS INC':        { ticker: 'LITE',  currency: 'USD' },
+  'Ciena Corp':                   { ticker: 'CIEN',  currency: 'USD' },
+  'CIENA CORP':                   { ticker: 'CIEN',  currency: 'USD' },
+  'MARVELL TECHNOLOGY INC':       { ticker: 'MRVL',  currency: 'USD' },
+  'Marvell Technology Inc':       { ticker: 'MRVL',  currency: 'USD' },
+  '마벨테크놀로지':                 { ticker: 'MRVL',  currency: 'USD' },
+  'Applied Optoelectronics Inc':  { ticker: 'AAOI',  currency: 'USD' },
+  'APPLIED OPTOELECTRONICS INC':  { ticker: 'AAOI',  currency: 'USD' },
+  'CORNING INC':                  { ticker: 'GLW',   currency: 'USD' },
+  'Corning Inc':                  { ticker: 'GLW',   currency: 'USD' },
+  '코닝':                          { ticker: 'GLW',   currency: 'USD' },
+  'Tower Semiconductor Ltd':      { ticker: 'TSEM',  currency: 'USD' },
+  'TOWER SEMICONDUCTOR LTD':      { ticker: 'TSEM',  currency: 'USD' },
+  'Celestica Inc':                { ticker: 'CLS',   currency: 'USD' },
+  'CELESTICA INC':                { ticker: 'CLS',   currency: 'USD' },
+  'Fabrinet':                     { ticker: 'FN',    currency: 'USD' },
+  'FABRINET':                     { ticker: 'FN',    currency: 'USD' },
+  'ARISTA NETWORKS INC':          { ticker: 'ANET',  currency: 'USD' },
+  'Arista Networks Inc':          { ticker: 'ANET',  currency: 'USD' },
+  '아리스타네트웍스':               { ticker: 'ANET',  currency: 'USD' },
+  'JUNIPER NETWORKS INC':         { ticker: 'JNPR',  currency: 'USD' },
+  'ASTERA LABS INC':              { ticker: 'ALAB',  currency: 'USD' },
+  'Astera Labs Inc':              { ticker: 'ALAB',  currency: 'USD' },
+  'CREDO TECHNOLOGY GROUP HOLDING': { ticker: 'CRDO', currency: 'USD' },
+  'Credo Technology Group Holding Ltd': { ticker: 'CRDO', currency: 'USD' },
   // 미국 통신/유틸리티/리츠
   'AT&T INC':                     { ticker: 'T',     currency: 'USD' },
   'VERIZON COMMUNICATIONS INC':   { ticker: 'VZ',    currency: 'USD' },
@@ -1235,8 +1272,9 @@ async function fetchETFHoldingsFull(
 
   // 3차: WiseReport (전체 50~200개, 느림)
   const wrHoldings = await fetchWiseReportHoldings(itemcode);
+  const wrHasWeights = wrHoldings.length > 0 && wrHoldings.slice(0, 5).some(h => h.weight > 0);
 
-  if (wrHoldings.length > 0) {
+  if (wrHasWeights) {
     // Naver top10이 있으면 코드 매핑 활용 (WR은 코드 없음)
     const nameToCode: Record<string, string> = {};
     for (const n of naverHoldings) if (n.code && n.name) nameToCode[n.name] = n.code;
@@ -1256,9 +1294,22 @@ async function fetchETFHoldingsFull(
     return { h: merged, source };
   }
 
-  // 모든 소스 실패 시 Naver 결과(빈/소량)라도 반환
-  _holdingsFullCache[cacheKey] = { h: naverHoldings, ts: Date.now(), source: 'naver-etf' };
-  return { h: naverHoldings, source: 'naver-etf' };
+  // 4차: ETFCheck (해외주식형 — Naver/WR 모두 비중을 못 주는 경우 비중 보완)
+  const ecHoldings = await fetchEtfCheckHoldings(itemcode);
+  if (ecHoldings.length > 0 && ecHoldings.slice(0, 5).some(h => h.weight > 0)) {
+    // 현금성 자산 제외
+    const cleaned = ecHoldings.filter(h =>
+      h.name && !h.name.includes('현금') && !h.name.includes('예치금')
+      && !h.name.includes('설정현금') && !/\b(cash|deposit)\b/i.test(h.name));
+    _holdingsFullCache[cacheKey] = { h: cleaned, ts: Date.now(), source: 'etfcheck' };
+    return { h: cleaned, source: 'etfcheck' };
+  }
+
+  // 모든 소스 실패 → 비중 없는 WR이라도 (수량은 있음), 그것도 없으면 Naver 결과
+  const fallback = wrHoldings.length > 0 ? wrHoldings : naverHoldings;
+  const fallbackSource = wrHoldings.length > 0 ? 'wisereport' : 'naver-etf';
+  _holdingsFullCache[cacheKey] = { h: fallback, ts: Date.now(), source: fallbackSource };
+  return { h: fallback, source: fallbackSource };
 }
 
 /** 네이버 ETF 메인페이지에서 구성종목 상위 10개 추출 (종목코드 포함, avgcap용) */
