@@ -395,11 +395,70 @@ async function fetchKRWRate(currency: FxCurrency): Promise<number> {
   }
 }
 
-/** Yahoo Finance v8 chart API로 현재가 조회 → 기준시총 × (현재가/기준가) 환산 */
+// ── Naver 해외주식 시총 조회 ──────────────────────────────────────────────────
+const _reutersCodeCache: Record<string, string | null> = {};
+
+/** 미국 티커 → Naver reutersCode (자동완성 API, 결과 영구 캐시) */
+async function resolveNaverWorldCode(ticker: string): Promise<string | null> {
+  if (ticker in _reutersCodeCache) return _reutersCodeCache[ticker];
+  try {
+    const txt = await fetchPageUtf8(
+      `https://ac.stock.naver.com/ac?q=${encodeURIComponent(ticker)}&target=stock`,
+      'https://m.stock.naver.com/'
+    );
+    const items = JSON.parse(txt).items || [];
+    // 해외 종목 중 code가 티커와 정확히 일치하는 것 우선 (PL, FN 같은 짧은 티커 오매칭 방지)
+    const foreign = items.filter((i: any) => i.nationCode && i.nationCode !== 'KOR' && i.reutersCode);
+    const exact = foreign.find((i: any) => i.code === ticker);
+    const rc = (exact || (foreign.length === 1 ? foreign[0] : null))?.reutersCode || null;
+    _reutersCodeCache[ticker] = rc;
+    return rc;
+  } catch {
+    _reutersCodeCache[ticker] = null;
+    return null;
+  }
+}
+
+/** Naver 해외주식 basic API에서 실시간 시총(억 KRW) 조회
+ *  marketValue 형식: "2,210억 USD" / "1.5조 USD" 등 → 억 KRW 환산 */
+async function fetchNaverWorldCapKRW(ticker: string): Promise<number | null> {
+  try {
+    const rc = await resolveNaverWorldCode(ticker);
+    if (!rc) return null;
+    const txt = await fetchPageUtf8(
+      `https://api.stock.naver.com/stock/${encodeURIComponent(rc)}/basic`,
+      'https://m.stock.naver.com/'
+    );
+    if (!txt || txt[0] !== '{') return null;
+    const j = JSON.parse(txt);
+    const mv = (j.stockItemTotalInfos || []).find((x: any) => x.code === 'marketValue');
+    if (!mv?.value) return null;
+    const m = String(mv.value).replace(/,/g, '').match(/([\d.]+)\s*(조|억)?\s*([A-Z]{3})/);
+    if (!m) return null;
+    let amount = parseFloat(m[1]);          // 외화 기준 금액
+    if (m[2] === '조') amount *= 10000;     // 조 → 억 단위 통일
+    if (!isFinite(amount) || amount <= 0) return null;
+    const cur = m[3];
+    const fxCur: FxCurrency = (['USD','JPY','EUR','GBP','CHF','HKD'].includes(cur) ? cur : 'USD') as FxCurrency;
+    const rate = await fetchKRWRate(fxCur); // 1 외화당 KRW
+    return Math.round(amount * rate);       // 억 외화 × KRW환율 = 억 KRW
+  } catch {
+    return null;
+  }
+}
+
+/** 해외종목 시총(억 KRW) 조회: 1차 Naver 실시간 → 2차 정적 추정표 폴백 */
 async function fetchYahooMarketCapKRW(ticker: string, currency: FxCurrency): Promise<number | null> {
   const cacheKey = ticker;
   const cached = _globalCapCache[cacheKey];
   if (cached && Date.now() - cached.ts < GLOBAL_CAP_TTL) return cached.cap;
+
+  // 1차: Naver 해외주식 실시간 시총 (전일 종가 기준, 환율 반영)
+  const naverCap = await fetchNaverWorldCapKRW(ticker);
+  if (naverCap !== null) {
+    _globalCapCache[cacheKey] = { cap: naverCap, ts: Date.now() };
+    return naverCap;
+  }
 
   // 기준 시가총액 표 (USD 기준, 2025년 초 기준값 × 현재가 비율로 조정)
   // 값: [기준가(USD), 기준시총(억 KRW)] — 기준 환율 1400원 기준
