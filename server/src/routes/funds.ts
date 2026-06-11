@@ -3,7 +3,6 @@ import https from 'https';
 import iconv from 'iconv-lite';
 import crypto from 'crypto';
 import { fetchTimeEtfHoldings, TIME_ETF_MAP } from './timeEtf.js';
-import { getMorningstarAvgCapKrwBillion } from './morningstar.js';
 
 // USD millions → KRW 억 원 (고정 환율 1400원 기준, STATIC_CAP_KRW와 일관)
 // Morningstar 캐시에서 이미 KRW 억원으로 정규화됨 (변환 불필요)
@@ -1941,10 +1940,11 @@ router.get('/naver/list', async (req: Request, res: Response) => {
     const results = sliced.map(item => {
       const listDate = _listDateCache[item.itemcode] || null;
 
-      // Morningstar 캐시에서 평균시가총액 인라인 포함 (별도 API 호출 불필요)
-      const msCapBil = getMorningstarAvgCapKrwBillion(item.itemcode);
-      const avgCap = msCapBil
-        ? { bil: msCapBil, formatted: formatMarketCap(msCapBil), ...sizeLabel(msCapBil), source: 'morningstar' }
+      // 자체 가중산술평균 캐시 인라인 포함 (없으면 null → 프론트가 /avgcaps로 채움)
+      // Morningstar 기하평균은 사용하지 않음 (홀딩스 패널 기여합과 불일치 방지)
+      const cachedAvg = _internalAvgCapCache[item.itemcode];
+      const avgCap = (cachedAvg && Date.now() - cachedAvg.ts < AVG_CAP_TTL)
+        ? { bil: cachedAvg.avg, formatted: formatMarketCap(cachedAvg.avg), ...sizeLabel(cachedAvg.avg), source: 'internal' }
         : null;
 
       return {
@@ -2103,11 +2103,10 @@ router.get('/naver/holdings/:itemcode', async (req: Request, res: Response) => {
       marketCapBillion: globalCapResults[i],
     }));
 
-    // 종목기하평균시총: Morningstar 캐시 우선 → 자체 계산 폴백
+    // 종목 가중산술평균 시총 (Morningstar 기하평균 미사용 — 기여합과 일치)
     let weightedAvg: number | null = null;
-    let avgCapSource: 'morningstar' | 'internal' | 'none' = 'none';
+    let avgCapSource: 'internal' | 'none' = 'none';
 
-    // 1차: 종목별 시총 기반 가중산술평균 자체 계산 (기여 합과 일치)
     let totalStockWeight = 0;
     let weightedSum = 0;
     for (const h of enriched) {
@@ -2119,13 +2118,6 @@ router.get('/naver/holdings/:itemcode', async (req: Request, res: Response) => {
     if (totalStockWeight > 0) {
       weightedAvg = Math.round(weightedSum / totalStockWeight);
       avgCapSource = 'internal';
-    } else {
-      // 폴백: Morningstar HS03W 캐시 (기하평균) — 시총 매칭이 전혀 없을 때만
-      const msKrwBillion = getMorningstarAvgCapKrwBillion(itemcode);
-      if (msKrwBillion !== null && msKrwBillion > 0) {
-        weightedAvg = msKrwBillion;
-        avgCapSource = 'morningstar';
-      }
     }
 
     // 홀딩스 패널 계산값을 ETF 카드(calcAvgCap)와 공유 → 두 값 일치
@@ -2143,7 +2135,7 @@ router.get('/naver/holdings/:itemcode', async (req: Request, res: Response) => {
       weightedAvgFormatted: weightedAvg ? formatMarketCap(weightedAvg) : null,
       sizeLabel: size?.label ?? null,
       sizeColor: size?.color ?? null,
-      coverage: avgCapSource === 'morningstar' ? 100 : 0,
+      coverage: totalStockWeight,
       topN: enriched.length,
       totalHoldings: enriched.length,
       source,

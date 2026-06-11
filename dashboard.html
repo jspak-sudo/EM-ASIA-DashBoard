@@ -2909,17 +2909,10 @@ async function toggleHoldings(itemcode) {
       h += `<span class="text-[10px] text-gray-500 ml-1" title="채권·MMF·채권혼합은 시가총액이 의미가 없어 비중만 표시합니다">🏦 채권형 — 비중만 표시 (시총 미산정)</span>`;
     } else if (d.weightedAvgFormatted) {
       const capCls2 = capCls(d.weightedAvgMarketCap);
-      const isGeo = d.avgCapSource === 'morningstar';
-      const capSrcLabel = isGeo
-        ? '<span class="text-[9px] text-yellow-500 ml-1" title="Morningstar 기하평균 (극단값 영향 완화)">기하평균</span>'
-        : '<span class="text-[9px] text-gray-600 ml-1" title="비중×시총 가중산술평균 (하단 기여 합계와 동일)">가중산술평균</span>';
-      const capTitle = isGeo ? '종목평균시총' : '종목가중평균시총';
-      h += `<span class="text-xs font-semibold ${capCls2} ml-1">${capTitle} ${d.weightedAvgFormatted}</span>${capSrcLabel}`;
+      const capSrcLabel = '<span class="text-[9px] text-gray-600 ml-1" title="비중×시총 가중산술평균 (하단 기여 합계와 동일)">가중산술평균</span>';
+      h += `<span class="text-xs font-semibold ${capCls2} ml-1">종목가중평균시총 ${d.weightedAvgFormatted}</span>${capSrcLabel}`;
     }
     h += `<span class="ml-auto text-[9px] ${src.color}">출처: ${src.label}</span>`;
-    if (d.avgCapSource === 'morningstar') {
-      h += `<span class="text-[9px] text-yellow-600 ml-1">Morningstar</span>`;
-    }
     h += `</div>`;
 
     // ???? ??(max-height 400px)
