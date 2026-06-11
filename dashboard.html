@@ -2322,6 +2322,7 @@ let _naverSort = 'marketSum';  // 기본 정렬: AUM 순
 
 const NAVER_TABS = [
   ['', '전체'], ['new_this_month', `🆕 ${new Date().getMonth()+1}월 신규 ETF`], ['new_this_year', `🆕 ${new Date().getFullYear()}년 신규 ETF`],
+  ['__hr__', ''],
   ['__group__', '지역별'],
   ['kr_idx', '📊 국내대형'], ['kr_small', '📈 국내중소형'], ['us', '🇺🇸 미국인덱스'], ['china', '🇨🇳 중국주식'], ['developed', '🌍 선진국'], ['em', '🌏 신흥국'],
   ['__group__', '섹터/테마 — IT/기술'],
@@ -2335,17 +2336,31 @@ const NAVER_TABS = [
   ['__group__', '채권'],
   ['bond_kr', '🏦 국내채권'], ['bond_short', '⏱️ 국내단기채/MMF'], ['maturity', '📅 만기매칭/목표전환'], ['bond_global', '🌐 글로벌채권'], ['currency', '💵 글로벌단기채/FX'],
   ['__group__', '기타'],
-  ['unclassified', '❓ 미분류/신규']
+  ['unclassified', '❓ 미분류/신규'],
+  ['__hr__', ''],
+  ['__group_brand__', '운용사'],
+  ['brand_KODEX', 'KODEX · 삼성'], ['brand_TIGER', 'TIGER · 미래에셋'], ['brand_RISE', 'RISE · KB'],
+  ['brand_ACE', 'ACE · 한국투자'], ['brand_PLUS', 'PLUS · 한화'], ['brand_SOL', 'SOL · 신한'],
+  ['brand_KIWOOM', 'KIWOOM · 키움'], ['brand_HANARO', 'HANARO · NH'], ['brand_1Q', '1Q · 하나'],
+  ['brand_KOACT', 'KoAct · 삼성액티브'], ['brand_TIME', 'TIME · 타임폴리오'], ['brand_WON', 'WON · 우리'],
+  ['brand_ETC', '기타 운용사']
 ];
+
+// 운용사 필터용 주요 브랜드 (대문자, 이름 시작 매칭)
+const ETF_BRANDS = ['KODEX','TIGER','RISE','ACE','PLUS','SOL','KIWOOM','HANARO','1Q','KOACT','TIME','WON'];
 
 function renderNaverTabs(activeKeys) {
   if (!Array.isArray(activeKeys)) activeKeys = [activeKeys];
   const container = document.getElementById('naverTabContainer');
   if (!container) return;
   container.innerHTML = NAVER_TABS.map(([key, label]) => {
+    if (key === '__hr__') return `<div class="w-full border-t-2 border-gray-200 mt-4 mb-1"></div>`;
     if (key === '__group__') return `<div class="w-full h-0 mb-1"></div><p class="w-full text-[10px] font-bold text-[#043b72] mt-3 mb-1 uppercase tracking-wider">${label}</p>`;
+    if (key === '__group_brand__') return `<div class="w-full h-0 mb-1"></div><p class="w-full text-[10px] font-bold text-[#e37500] mt-3 mb-1 uppercase tracking-wider">🏢 ${label}</p>`;
     const active = activeKeys.includes(key);
-    const baseCls = `px-3 py-1.5 rounded-full text-[11px] font-bold transition-all border shadow-sm ${active ? 'naver-tab-active' : ''}`;
+    const isBrand = key.startsWith('brand_');
+    const brandCls = isBrand && !active ? 'border-dashed' : '';
+    const baseCls = `px-3 py-1.5 rounded-full text-[11px] font-bold transition-all border shadow-sm ${brandCls} ${active ? 'naver-tab-active' : ''}`;
     return `<button onclick="switchNaverTab('${key}')" id="naverTab_${key || 'all'}" class="${baseCls}">${label}</button>`;
   }).join('');
 }
@@ -2440,6 +2455,12 @@ function applyNaverFilter(activeKeys, sort) {
     items = items.filter(item => activeKeys.some(key => {
       if (key === 'new_this_month') return item.isNew === true || item.isNew === 'True';
       if (key === 'new_this_year') return item.listDate ? item.listDate.startsWith(String(new Date().getFullYear()) + '-') : false;
+      // 운용사 브랜드 필터: ETF명 시작 매칭
+      if (key.startsWith('brand_')) {
+        const nm = (item.name || item.itemname || '').toUpperCase().replace(/\s/g, '');
+        if (key === 'brand_ETC') return !ETF_BRANDS.some(b => nm.startsWith(b));
+        return nm.startsWith(key.slice(6));
+      }
       // 다중 카테고리 지원: item.categoryKeys(배열) 있으면 우선, 없으면 단일 categoryKey
       if (Array.isArray(item.categoryKeys)) return item.categoryKeys.includes(key);
       return item.categoryKey === key;
