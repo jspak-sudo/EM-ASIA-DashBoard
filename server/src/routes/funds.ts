@@ -2081,24 +2081,24 @@ router.get('/naver/holdings/:itemcode', async (req: Request, res: Response) => {
     let weightedAvg: number | null = null;
     let avgCapSource: 'morningstar' | 'internal' | 'none' = 'none';
 
-    // 0차: Morningstar HS03W 캐시 (기하평균, 공식 데이터)
-    const msKrwBillion = getMorningstarAvgCapKrwBillion(itemcode);
-    if (msKrwBillion !== null && msKrwBillion > 0) {
-      weightedAvg = msKrwBillion;
-      avgCapSource = 'morningstar';
-    } else {
-      // 폴백: 코드 있는 종목의 가중산술평균 자체 계산
-      let totalStockWeight = 0;
-      let weightedSum = 0;
-      for (const h of enriched) {
-        if (h.marketCapBillion !== null && h.marketCapBillion > 0 && h.weight > 0) {
-          totalStockWeight += h.weight;
-          weightedSum += h.marketCapBillion * h.weight;
-        }
+    // 1차: 종목별 시총 기반 가중산술평균 자체 계산 (기여 합과 일치)
+    let totalStockWeight = 0;
+    let weightedSum = 0;
+    for (const h of enriched) {
+      if (h.marketCapBillion !== null && h.marketCapBillion > 0 && h.weight > 0) {
+        totalStockWeight += h.weight;
+        weightedSum += h.marketCapBillion * h.weight;
       }
-      if (totalStockWeight > 0) {
-        weightedAvg = Math.round(weightedSum / totalStockWeight);
-        avgCapSource = 'internal';
+    }
+    if (totalStockWeight > 0) {
+      weightedAvg = Math.round(weightedSum / totalStockWeight);
+      avgCapSource = 'internal';
+    } else {
+      // 폴백: Morningstar HS03W 캐시 (기하평균) — 시총 매칭이 전혀 없을 때만
+      const msKrwBillion = getMorningstarAvgCapKrwBillion(itemcode);
+      if (msKrwBillion !== null && msKrwBillion > 0) {
+        weightedAvg = msKrwBillion;
+        avgCapSource = 'morningstar';
       }
     }
 
@@ -2132,15 +2132,8 @@ router.get('/naver/holdings/:itemcode', async (req: Request, res: Response) => {
 const _internalAvgCapCache: Record<string, { avg: number; ts: number }> = {};
 const AVG_CAP_TTL = 12 * 3600 * 1000;
 
-// 종목기하평균시총 계산: Morningstar 캐시 우선 → 자체 계산 폴백
+// 종목평균시총 계산: 자체 가중산술평균 우선 → Morningstar 폴백 (홀딩스 패널 기여합과 일치)
 async function calcAvgCap(itemcode: string): Promise<{ avg: number; formatted: string; label: string; color: string } | null> {
-  // 0차: Morningstar HS03W 캐시 (기하평균, 공식 데이터)
-  const msKrwBillion = getMorningstarAvgCapKrwBillion(itemcode);
-  if (msKrwBillion !== null && msKrwBillion > 0) {
-    const size = sizeLabel(msKrwBillion);
-    return { avg: msKrwBillion, formatted: formatMarketCap(msKrwBillion), ...size };
-  }
-
   // 1차: 메모리 캐시 (자체 계산 결과)
   if (_internalAvgCapCache[itemcode] && Date.now() - _internalAvgCapCache[itemcode].ts < AVG_CAP_TTL) {
     const ms = _internalAvgCapCache[itemcode].avg;
