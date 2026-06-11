@@ -2036,6 +2036,32 @@ router.get('/naver/holdings/:itemcode', async (req: Request, res: Response) => {
       code: nameToCode[h.name] || h.code || '',
     })) : top10;
 
+    // ── 채권/MMF/단기채/채권혼합 ETF는 시총 조회 skip (비중만 의미 있음) ───────────
+    const etfNameForCat = (await fetchNaverETFList().catch(() => []))
+      .find(i => i.itemcode === itemcode)?.itemname || '';
+    const BOND_CATS = new Set(['mixed', 'maturity', 'currency', 'bond_short', 'bond_global', 'bond_kr']);
+    const isBondETF = etfNameForCat
+      ? BOND_CATS.has(classifyETFByName(etfNameForCat).key)
+      : false;
+
+    if (isBondETF) {
+      const bondHoldings: HoldingInfo[] = holdings.map(h => ({ ...h, marketCapBillion: null }));
+      return res.json({
+        etfCode: itemcode,
+        holdings: bondHoldings,
+        weightedAvgMarketCap: null,
+        weightedAvgFormatted: null,
+        sizeLabel: null,
+        sizeColor: null,
+        coverage: 0,
+        topN: bondHoldings.length,
+        totalHoldings: bondHoldings.length,
+        source,
+        avgCapSource: 'none',
+        isBondETF: true,
+      });
+    }
+
     // ── KR 6자리 코드만 Naver Finance 시총 조회 ─────────────────────────────────
     const CAP_FETCH_LIMIT = 30;
     const krWithCode = holdings.filter(h => /^\d{6}$/.test(h.code));

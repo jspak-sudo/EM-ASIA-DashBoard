@@ -2905,7 +2905,9 @@ async function toggleHoldings(itemcode) {
 
     let h = `<div class="flex items-center gap-2 mb-1 flex-wrap">`;
     h += `<span class="text-gray-400 text-xs">총 ${d.topN}종목</span>`;
-    if (d.weightedAvgFormatted) {
+    if (d.isBondETF) {
+      h += `<span class="text-[10px] text-gray-500 ml-1" title="채권·MMF·채권혼합은 시가총액이 의미가 없어 비중만 표시합니다">🏦 채권형 — 비중만 표시 (시총 미산정)</span>`;
+    } else if (d.weightedAvgFormatted) {
       const capCls2 = capCls(d.weightedAvgMarketCap);
       const isGeo = d.avgCapSource === 'morningstar';
       const capSrcLabel = isGeo
@@ -2971,7 +2973,7 @@ async function toggleHoldings(itemcode) {
         <td class="py-1 pr-3 text-gray-400">합계</td>
         <td class="py-1 pr-3 text-right text-orange-400">${_wSumTotal.toFixed(2)}%${gapNote}</td>
         <td class="py-1 pr-3 text-right text-gray-600">—</td>
-        <td class="py-1 text-right text-orange-400">${fmtCap(_contribSumTotal)}</td>
+        <td class="py-1 text-right text-orange-400">${_contribSumTotal > 0 ? fmtCap(_contribSumTotal) : '—'}</td>
       </tr></tfoot>`;
     }
     h += '</table></div>';
