@@ -419,30 +419,88 @@ async function resolveNaverWorldCode(ticker: string): Promise<string | null> {
   }
 }
 
-/** Naver 해외주식 basic API에서 실시간 시총(억 KRW) 조회
+/** reutersCode → Naver basic API 시총(억 KRW)
  *  marketValue 형식: "2,210억 USD" / "1.5조 USD" 등 → 억 KRW 환산 */
-async function fetchNaverWorldCapKRW(ticker: string): Promise<number | null> {
+async function fetchNaverBasicCapKRW(reutersCode: string): Promise<number | null> {
   try {
-    const rc = await resolveNaverWorldCode(ticker);
-    if (!rc) return null;
     const txt = await fetchPageUtf8(
-      `https://api.stock.naver.com/stock/${encodeURIComponent(rc)}/basic`,
+      `https://api.stock.naver.com/stock/${encodeURIComponent(reutersCode)}/basic`,
       'https://m.stock.naver.com/'
     );
     if (!txt || txt[0] !== '{') return null;
     const j = JSON.parse(txt);
     const mv = (j.stockItemTotalInfos || []).find((x: any) => x.code === 'marketValue');
-    if (!mv?.value) return null;
-    const m = String(mv.value).replace(/,/g, '').match(/([\d.]+)\s*(조|억)?\s*([A-Z]{3})/);
-    if (!m) return null;
-    let amount = parseFloat(m[1]);          // 외화 기준 금액
-    if (m[2] === '조') amount *= 10000;     // 조 → 억 단위 통일
+    if (!mv) return null;
+
+    // 1순위: valueDesc = Naver 제공 원화 환산값 ("1,537조 2,700억원" / "8,900억원")
+    if (mv.valueDesc) {
+      const s = String(mv.valueDesc).replace(/,/g, '');
+      const jo = s.match(/([\d.]+)\s*조/);
+      const uk = s.match(/(?:조\s*)?([\d.]+)\s*억/);
+      const total = (jo ? parseFloat(jo[1]) * 10000 : 0) + (uk ? parseFloat(uk[1]) : 0);
+      if (isFinite(total) && total > 0) return Math.round(total);
+    }
+
+    // 2순위: value = 외화 표기 ("1조 58억 USD" / "2210억 USD") → 환율 환산
+    if (!mv.value) return null;
+    const s2 = String(mv.value).replace(/,/g, '');
+    const curM = s2.match(/([A-Z]{3})\s*$/);
+    const jo2 = s2.match(/([\d.]+)\s*조/);
+    const uk2 = s2.match(/(?:조\s*)?([\d.]+)\s*억/);
+    let amount = (jo2 ? parseFloat(jo2[1]) * 10000 : 0) + (uk2 ? parseFloat(uk2[1]) : 0);
+    if (!jo2 && !uk2) {
+      const plain = s2.match(/^([\d.]+)/);     // 단위 없는 순수 숫자 (가능성 낮음)
+      amount = plain ? parseFloat(plain[1]) : 0;
+    }
     if (!isFinite(amount) || amount <= 0) return null;
-    const cur = m[3];
+    const cur = curM ? curM[1] : 'USD';
     const fxCur: FxCurrency = (['USD','JPY','EUR','GBP','CHF','HKD'].includes(cur) ? cur : 'USD') as FxCurrency;
-    const rate = await fetchKRWRate(fxCur); // 1 외화당 KRW
-    return Math.round(amount * rate);       // 억 외화 × KRW환율 = 억 KRW
+    const rate = await fetchKRWRate(fxCur);   // 1 외화당 KRW
+    return Math.round(amount * rate);         // 억 외화 × KRW환율 = 억 KRW
   } catch {
+    return null;
+  }
+}
+
+/** 티커 → Naver 실시간 시총(억 KRW) */
+async function fetchNaverWorldCapKRW(ticker: string): Promise<number | null> {
+  const rc = await resolveNaverWorldCode(ticker);
+  if (!rc) return null;
+  return fetchNaverBasicCapKRW(rc);
+}
+
+// ── 회사명 → 시총 (GLOBAL_TICKER_MAP 미등록 종목 자동 해결) ──────────────────
+const _nameCapCache: Record<string, { cap: number | null; ts: number }> = {};
+
+/** 영문/한글 회사명으로 Naver 자동완성 검색 → 해외종목 시총(억 KRW) */
+async function fetchNaverWorldCapByName(rawName: string): Promise<number | null> {
+  const key = rawName.toLowerCase().trim();
+  const c = _nameCapCache[key];
+  if (c && Date.now() - c.ts < GLOBAL_CAP_TTL) return c.cap;
+
+  try {
+    // 법인 접미사·클래스 표기 제거: "ZEBRA TECHNOLOGIES CORP-CL A" → "ZEBRA TECHNOLOGIES"
+    const cleaned = rawName
+      .replace(/-?\s*(CL|CLASS)\s*[A-Z]$/i, '')
+      .replace(/\b(INC|CORP|CO|PLC|LTD|LLC|SA|NV|AG|SE|OYJ|PBC|ADR|HOLDINGS?|GROUP)\b\.?/gi, ' ')
+      .replace(/[,\.&']/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (cleaned.length < 2) { _nameCapCache[key] = { cap: null, ts: Date.now() }; return null; }
+
+    const txt = await fetchPageUtf8(
+      `https://ac.stock.naver.com/ac?q=${encodeURIComponent(cleaned)}&target=stock`,
+      'https://m.stock.naver.com/'
+    );
+    const foreign = (JSON.parse(txt).items || [])
+      .filter((i: any) => i.nationCode && i.nationCode !== 'KOR' && i.reutersCode);
+    if (!foreign.length) { _nameCapCache[key] = { cap: null, ts: Date.now() }; return null; }
+
+    const cap = await fetchNaverBasicCapKRW(foreign[0].reutersCode);
+    _nameCapCache[key] = { cap, ts: Date.now() };
+    return cap;
+  } catch {
+    _nameCapCache[key] = { cap: null, ts: Date.now() };
     return null;
   }
 }
@@ -1219,6 +1277,89 @@ async function getStockCodeMap(): Promise<Record<string, string>> {
   return map;
 }
 
+// ── PLUS ETF (한화자산운용) 공식 어댑터 ──────────────────────────────────────
+// plusetf.co.kr 운용사 공식 PDF — 전체 구성종목 + 당일 데이터 + KR코드/ISIN 제공
+const PLUS_MAP_TTL = 24 * 3600 * 1000;
+let _plusNameToId: Record<string, string> | null = null;
+let _plusMapTs = 0;
+
+function _plusNorm(name: string): string {
+  return name.replace(/&amp;/g, '&').replace(/\s+/g, '').toLowerCase();
+}
+
+/** /product/overview HTML에서 상품명 → 내부ID 매핑 추출 (24h 캐시) */
+async function getPlusEtfMap(): Promise<Record<string, string>> {
+  if (_plusNameToId && Date.now() - _plusMapTs < PLUS_MAP_TTL) return _plusNameToId;
+  try {
+    const html = await fetchPageUtf8('https://www.plusetf.co.kr/product/overview', 'https://www.plusetf.co.kr/');
+    const re = /href="\/product\/detail\?n=(\d+)"[^>]*>([\s\S]{0,300}?)<\/a>/g;
+    const map: Record<string, string> = {};
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(html))) {
+      const t = m[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (t && /^PLUS/i.test(t)) map[_plusNorm(t)] = m[1];
+    }
+    if (Object.keys(map).length > 0) {
+      _plusNameToId = map;
+      _plusMapTs = Date.now();
+      console.log(`[plus-etf] 상품 매핑 ${Object.keys(map).length}개 로드`);
+    }
+    return _plusNameToId || {};
+  } catch (e) {
+    console.warn('[plus-etf] overview 파싱 실패:', (e as Error).message);
+    return _plusNameToId || {};
+  }
+}
+
+/** PLUS ETF 보유종목 (운용사 공식, ETF명으로 조회) */
+async function fetchPlusEtfHoldings(etfName: string): Promise<HoldingInfo[]> {
+  const map = await getPlusEtfMap();
+  const id = map[_plusNorm(etfName)];
+  if (!id) return [];
+
+  // 최근 7일 내 영업일 데이터 시도 (주말·공휴일 대비)
+  for (let back = 0; back < 7; back++) {
+    const d = new Date(Date.now() - back * 86400000);
+    const ds = d.toISOString().slice(0, 10).replace(/-/g, '');
+    try {
+      const txt = await fetchPageUtf8(
+        `https://www.plusetf.co.kr/api/v1/product/pdf/list?n=${id}&page=0&pageSize=500&d=${ds}`,
+        `https://www.plusetf.co.kr/product/detail?n=${id}`
+      );
+      if (!txt || (txt[0] !== '{' && txt[0] !== '[')) continue;
+      const rows = (JSON.parse(txt).content || []) as any[];
+      if (!rows.length) continue;
+
+      const out: HoldingInfo[] = [];
+      for (const r of rows) {
+        const name = String(r.jmNm || '').trim();
+        const ratio = parseFloat(r.ratio) || 0;
+        if (!name || ratio <= 0) continue;
+        // 현금·선물·스왑 등 비주식 자산 제외
+        if (name.includes('현금') || name.includes('예치금')
+            || /\b(FUT|SWAP)\b|선물|스왑/i.test(name)) continue;
+
+        // jmCd: KR 6자리 직접 or ISIN(KR7xxxxxx00x → 6자리 추출, 해외 ISIN → 빈 코드)
+        let code = String(r.jmCd || '').trim();
+        if (!/^\d{6}$/.test(code)) {
+          const krIsin = code.match(/^KR7(\d{6})\d{3}$/);
+          code = krIsin ? krIsin[1] : '';
+        }
+        const sharesNum = parseFloat(r.amount);
+        out.push({
+          code,
+          name,
+          weight: ratio,
+          shares: isFinite(sharesNum) && sharesNum > 0 ? Math.round(sharesNum) : undefined,
+          marketCapBillion: null,
+        });
+      }
+      if (out.length) return out;
+    } catch {}
+  }
+  return [];
+}
+
 /** WiseReport에서 ETF 전체 구성종목 추출 (이름+비중+주식수, 코드 없음 - 50~200개 전체 제공) */
 async function fetchWiseReportHoldings(itemcode: string): Promise<HoldingInfo[]> {
   try {
@@ -1319,6 +1460,19 @@ async function fetchETFHoldingsFull(
       return { h: holdings, source: 'time-etf' };
     }
   }
+
+  // 1.5차: PLUS ETF (한화자산운용) 공식 PDF — 당일 데이터 + 전체 종목 + 코드/ISIN
+  try {
+    const list = await fetchNaverETFList();
+    const etfName = list.find(i => i.itemcode === itemcode)?.itemname || '';
+    if (/^PLUS/i.test(etfName)) {
+      const pData = await fetchPlusEtfHoldings(etfName);
+      if (pData.length > 0) {
+        _holdingsFullCache[cacheKey] = { h: pData, ts: Date.now(), source: 'plus-etf' };
+        return { h: pData, source: 'plus-etf' };
+      }
+    }
+  } catch {}
 
   // 2차: Naver mobile ETF analysis API (top10, 빠름, 코드 포함)
   const naverHoldings = await fetchNaverEtfAnalysis(itemcode);
@@ -1913,7 +2067,8 @@ router.get('/naver/holdings/:itemcode', async (req: Request, res: Response) => {
         if (globalEntry) {
           return fetchYahooMarketCapKRW(globalEntry.ticker, globalEntry.currency).catch(() => null);
         }
-        return null;
+        // 사전에 없는 종목 → 회사명으로 Naver 검색 자동 해결
+        return fetchNaverWorldCapByName(h.name).catch(() => null);
       })
     );
 
@@ -2032,8 +2187,9 @@ async function calcAvgCap(itemcode: string): Promise<{ avg: number; formatted: s
       return { weight: h.weight, cap };
     }
 
-    // 4) 코드·이름 모두 불명
-    return { weight: h.weight, cap: null };
+    // 4) 사전 미등록 → 회사명으로 Naver 검색 자동 해결
+    const byName = await fetchNaverWorldCapByName(h.name).catch(() => null);
+    return { weight: h.weight, cap: byName };
   });
 
   const results = await Promise.all(fetchTasks);
