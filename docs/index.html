@@ -2785,8 +2785,8 @@ function renderNaverEtfList(items, total, sort, categoryMarketSums) {
       <td class="py-1.5 px-2">
         <button class="text-left" onclick="toggleHoldings('${code}')">
           <span class="text-white font-medium">${item.name || item.itemname}</span>
-          <span class="text-gray-600 text-[9px] ml-1">${code}</span>
-          <span class="block text-gray-600 text-[9px]" id="listdate_${code}">${item.listDate ? '상장 ' + item.listDate : ''}</span>
+          <span class="text-gray-400 text-[9px] ml-1">${code}</span>
+          <span class="block text-gray-400 text-[9px]" id="listdate_${code}">${item.listDate ? '상장 ' + item.listDate : ''}</span>
         </button>
       </td>
       <td class="py-1.5 px-1.5 text-right text-gray-300">${fmtW(item.marketSum)}</td>
