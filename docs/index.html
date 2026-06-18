@@ -50,6 +50,11 @@
   .etf-table tbody tr:hover td:first-child { background: var(--bg-card-hover) !important; }
   table { border-collapse: collapse; }
 
+  /* ETF FINDER 목록 헤더 틀고정 */
+  #naverEtfList thead { position: sticky; top: 53px; z-index: 20; }
+  body.embed-mode #naverEtfList thead { top: 0; }
+  #naverEtfList thead td, #naverEtfList thead th { background: var(--bg-base); }
+
   /* Mirae button */
   .btn-tiger { background: var(--mirae-orange); color: #fff; border-radius: 24px; padding: 0.6rem 1.5rem; font-weight: 700; transition: all 0.2s; }
   .btn-tiger:hover { background: var(--mirae-orange-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(227, 117, 0, 0.3); }
