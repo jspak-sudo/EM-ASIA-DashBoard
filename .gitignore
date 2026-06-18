@@ -19,8 +19,10 @@ temp_*.json
 temp_*.html
 scratch/
 
-# 런타임 캐시 (서버 자동 생성)
-data/
+# 런타임 캐시 (서버 자동 생성) — 단, 공포탐욕·VIX 히스토리는 추적 (클라우드 스냅샷에 필요)
+data/*
+!data/fear_greed_history.csv
+!data/vix_history.csv
 etfs.json
 r.json
 top100.json
