@@ -134,17 +134,7 @@
 </head>
 <body>
 <div id="app" class="min-h-screen pb-10">
-  <header class="bg-[#043b72] px-4 py-4 shadow-lg sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-3"></div>
-      <div class="flex items-center gap-2 text-xs text-white/70 bg-black/10 px-3 py-1.5 rounded-full">
-        <span id="dot" class="text-orange-400 animate-pulse">●</span>
-        <span id="updateTime" class="font-medium">로딩 중..</span>
-      </div>
-    </div>
-  </header>
-
-  <div class="bg-white border-b border-gray-200 px-4 sticky top-[73px] z-40 shadow-sm">
+  <div class="bg-white border-b border-gray-200 px-4 sticky top-0 z-40 shadow-sm">
     <div class="max-w-7xl mx-auto flex gap-8 overflow-x-auto no-scrollbar">
       <button onclick="switchTab('overview')" id="tab-overview" class="py-4 px-1 text-[13px] tab-inactive whitespace-nowrap">시황</button>
       <button onclick="switchTab('stocks')" id="tab-stocks" class="py-4 px-1 text-[13px] tab-inactive whitespace-nowrap">주요종목</button>
@@ -2202,34 +2192,13 @@ async function refresh() {
       document.getElementById('content').classList.remove('hidden');
       renderBacktest();
     }
-    // 데이터 로드 성공 → 헤더 업데이트 시각 갱신
-    updateHeaderTime();
   } catch (err) {
     console.error('refresh failed:', err);
     document.getElementById('loading').classList.add('hidden');
     document.getElementById('error').classList.remove('hidden');
     document.getElementById('error').textContent = '데이터 로딩 실패 (' + currentTab + '): ' + (err.message || err);
-    const dotEl = document.getElementById('dot');
-    const utEl = document.getElementById('updateTime');
-    if (dotEl) dotEl.className = 'text-red-400';
-    if (utEl) utEl.textContent = '연결 실패';
   } finally {
     if (window._loadingSafety) { clearTimeout(window._loadingSafety); window._loadingSafety = null; }
-  }
-}
-
-// 헤더 우상단 "업데이트 시각" 갱신 (스냅샷이면 스냅샷 기준 시각, 아니면 현재 시각)
-function updateHeaderTime() {
-  const dotEl = document.getElementById('dot');
-  const utEl = document.getElementById('updateTime');
-  if (!utEl) return;
-  if (window.__SNAPSHOT_TIME__) {
-    if (dotEl) { dotEl.className = 'text-blue-400'; }
-    utEl.textContent = '📸 ' + window.__SNAPSHOT_TIME__ + ' 기준';
-  } else {
-    const now = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
-    if (dotEl) { dotEl.className = 'text-green-400'; }
-    utEl.textContent = '업데이트 ' + now;
   }
 }
 
