@@ -169,7 +169,17 @@
 <script>
 const API = 'http://localhost:3002/api';
 const COLS = ['1D','1W','YTD','1M','3M','6M','1Y','3Y/A','5Y/A','10Y/A'];
+// 임베드 모드: ?only=funds (또는 ?embed=funds) → 해당 탭만 단독 표시 (iframe 삽입용)
+const _embedOnly = (() => {
+  try {
+    const p = new URLSearchParams(location.search);
+    const v = p.get('only') || p.get('embed');
+    const validTabs = ['overview','stocks','feargreed','vix','funds','liquidity','valuation','fed','backtest'];
+    return v && validTabs.includes(v) ? v : null;
+  } catch { return null; }
+})();
 let currentTab = (() => {
+  if (_embedOnly) return _embedOnly;
   try {
     const saved = localStorage.getItem('dashboardCurrentTab');
     const validTabs = ['overview','stocks','feargreed','vix','funds','liquidity','repression','valuation','fed'];
@@ -6528,6 +6538,22 @@ function startBackfillPolling() {
   }, 6000);
 }
 window.startBackfillPolling = startBackfillPolling;
+
+// 임베드 모드: 탭바·푸터 숨기고 단일 탭만 표시 (iframe 삽입용)
+if (_embedOnly) {
+  document.body.classList.add('embed-mode');
+  // 탭 네비게이션 바 숨김
+  const tabBar = document.querySelector('#app > div.bg-white.border-b');
+  if (tabBar) tabBar.style.display = 'none';
+  // 하단 출처 푸터 숨김
+  const footer = document.querySelector('#app > div.border-t');
+  if (footer) footer.style.display = 'none';
+  // 상단 여백 축소
+  const main = document.querySelector('#app main');
+  if (main) main.classList.remove('py-4');
+  document.documentElement.style.background = 'transparent';
+  document.body.style.background = 'transparent';
+}
 
 // ??? ??? (??F&G )
 switchTab(currentTab);
