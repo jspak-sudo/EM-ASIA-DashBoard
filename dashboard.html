@@ -6548,11 +6548,12 @@ if (_embedOnly) {
   // 하단 출처 푸터 숨김
   const footer = document.querySelector('#app > div.border-t');
   if (footer) footer.style.display = 'none';
-  // 상단 여백 축소
+  // 상단 여백 축소 + 양옆 가운데정렬 해제 → 어두운 배경 가장자리까지 꽉 채움
   const main = document.querySelector('#app main');
-  if (main) main.classList.remove('py-4');
-  document.documentElement.style.background = 'transparent';
-  document.body.style.background = 'transparent';
+  if (main) { main.classList.remove('py-4', 'max-w-7xl'); main.style.maxWidth = 'none'; main.style.paddingTop = '12px'; }
+  // 배경은 대시보드 다크 배경 유지 (흰 여백 방지)
+  document.documentElement.style.background = 'var(--bg-base)';
+  document.body.style.background = 'var(--bg-base)';
 }
 
 // ??? ??? (??F&G )

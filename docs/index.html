@@ -6713,9 +6713,9 @@ if (_embedOnly) {
   if (footer) footer.style.display = 'none';
   // 상단 여백 축소
   const main = document.querySelector('#app main');
-  if (main) main.classList.remove('py-4');
-  document.documentElement.style.background = 'transparent';
-  document.body.style.background = 'transparent';
+  if (main) { main.classList.remove('py-4', 'max-w-7xl'); main.style.maxWidth = 'none'; main.style.paddingTop = '12px'; }
+  document.documentElement.style.background = 'var(--bg-base)';
+  document.body.style.background = 'var(--bg-base)';
 }
 
 // ??? ??? (??F&G )
