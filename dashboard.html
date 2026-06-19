@@ -2626,8 +2626,8 @@ function renderNaverEtfList(items, total, sort, categoryMarketSums) {
   <tr>
     <td colspan="5" class="pb-0 pt-1"></td>
     <td colspan="8" class="pb-0 pt-1 text-right pr-1">
-      <span class="text-[9px] text-gray-600 italic">총수익률 (분배금 포함, ETFCheck)</span>
-      <span id="returns_asof_badge" class="ml-1 text-[9px] text-gray-700 bg-gray-800 px-1 rounded"></span>
+      <span class="text-[10px] text-gray-300 font-semibold">총수익률 (분배금 포함, ETFCheck)</span>
+      <span id="returns_asof_badge" class="ml-1 text-[10px] text-amber-300 font-bold bg-gray-800 px-1.5 py-0.5 rounded"></span>
     </td>
   </tr>
   <tr class="border-b border-gray-700">
@@ -2671,7 +2671,7 @@ function renderNaverEtfList(items, total, sort, categoryMarketSums) {
             : `<span class="text-gray-700 text-[10px]">-</span>`;
         })()}
       </td>
-      <td class="py-1.5 px-1.5 text-right ${chgColor} font-semibold">${fmtPct(item.changeRate)}</td>
+      <td class="py-1.5 px-1.5 text-right ${chgColor} font-semibold" id="ret_d1_${code}">${fmtPct(item.changeRate)}</td>
       <td class="py-1 px-1.5 text-right text-[11px]" id="ret_ytd_${code}">${retDot}</td>
       <td class="py-1 px-1.5 text-right text-[11px]" id="ret_m1_${code}">${retDot}</td>
       <td class="py-1 px-1.5 text-right text-[11px]" id="ret_m3_${code}">${retDot}</td>
@@ -2726,6 +2726,17 @@ function fillReturnCells(code, info) {
     const cls = v > 0 ? 'text-red-400' : v < 0 ? 'text-blue-400' : 'text-gray-400';
     el.innerHTML = `<span class="${cls} font-semibold">${v > 0 ? '+' : ''}${v.toFixed(2)}%</span>`;
   }
+  // 1D: 직전 종가 기준 시장가 등락률(d1)로 교체 — 다른 수익률과 기준일 통일
+  // (d1 없으면 초기 렌더의 라이브 changeRate 값 그대로 유지)
+  if (info && info.d1 != null) {
+    const dEl = document.getElementById(`ret_d1_${code}`);
+    if (dEl) {
+      const v = info.d1;
+      const cls = v > 0 ? 'text-red-400' : v < 0 ? 'text-blue-400' : 'text-gray-400';
+      dEl.className = `py-1.5 px-1.5 text-right ${cls} font-semibold`;
+      dEl.innerHTML = `${v > 0 ? '+' : ''}${v.toFixed(2)}%`;
+    }
+  }
   // 총보수
   const terEl = document.getElementById(`ter_${code}`);
   if (terEl) {
@@ -2747,7 +2758,7 @@ function fillReturnCells(code, info) {
     // 전역 기준일 배지 (테이블 헤더)
     const globalBadge = document.getElementById('returns_asof_badge');
     if (globalBadge && !globalBadge.dataset.set) {
-      globalBadge.textContent = info.asOf + ' 기준';
+      globalBadge.textContent = '📅 ' + info.asOf + ' 종가 기준';
       globalBadge.dataset.set = '1';
     }
   }

@@ -1394,15 +1394,46 @@ async function fetchWiseReportHoldings(itemcode: string): Promise<HoldingInfo[]>
   }
 }
 
-/** Naver mobile ETF 분석 API에서 top10 보유종목 추출 (코드+이름+주식수+비중) */
-async function fetchNaverEtfAnalysis(itemcode: string): Promise<HoldingInfo[]> {
+// ── Naver etfAnalysis JSON 캐시 (보유종목 + 1D 수익률 공유) ──────────────────
+const _etfAnalysisCache: Record<string, { json: any; ts: number }> = {};
+const ETF_ANALYSIS_TTL = 6 * 3600 * 1000; // 6h
+
+/** Naver etfAnalysis 원본 JSON (캐시) — 보유종목·D1수익률 등 공용 */
+async function fetchEtfAnalysisRaw(itemcode: string): Promise<any | null> {
+  const c = _etfAnalysisCache[itemcode];
+  if (c && Date.now() - c.ts < ETF_ANALYSIS_TTL) return c.json;
   try {
     const txt = await fetchPageUtf8(
       `https://m.stock.naver.com/api/stock/${itemcode}/etfAnalysis`,
       `https://m.stock.naver.com/domestic/stock/${itemcode}/total`
     );
-    if (!txt || txt[0] !== '{') return [];
+    if (!txt || txt[0] !== '{') { _etfAnalysisCache[itemcode] = { json: null, ts: Date.now() }; return null; }
     const json = JSON.parse(txt);
+    _etfAnalysisCache[itemcode] = { json, ts: Date.now() };
+    return json;
+  } catch {
+    _etfAnalysisCache[itemcode] = { json: null, ts: Date.now() };
+    return null;
+  }
+}
+
+/** etfAnalysis에서 1D(시장가, 직전 종가 기준) 수익률 + 기준일 추출 */
+function extractNaverD1(json: any): { d1: number | null; refDate: string | null } {
+  if (!json) return { d1: null, refDate: null };
+  const list = json.returnPerformanceList || [];  // 시장가 기준 기간수익률
+  const d1row = list.find((x: any) => x.periodTypeCode === 'D1');
+  const d1 = d1row && d1row.value != null && isFinite(+d1row.value) ? +(+d1row.value).toFixed(2) : null;
+  // "2026.05.29" → "2026-05-29"
+  const ref = json.returnPerformanceReferenceDate || null;
+  const refDate = ref ? String(ref).replace(/\./g, '-').replace(/-$/, '') : null;
+  return { d1, refDate };
+}
+
+/** Naver mobile ETF 분석 API에서 top10 보유종목 추출 (코드+이름+주식수+비중) */
+async function fetchNaverEtfAnalysis(itemcode: string): Promise<HoldingInfo[]> {
+  try {
+    const json = await fetchEtfAnalysisRaw(itemcode);
+    if (!json) return [];
     const list = json.etfTop10MajorConstituentAssets || [];
 
     const out: HoldingInfo[] = [];
@@ -2269,6 +2300,7 @@ interface ReturnData {
   y5: number | null;
   y10: number | null;
   ytd: number | null;
+  d1: number | null;        // 1D 시장가 등락률 (직전 종가 기준, Naver etfAnalysis)
   listDate: string | null;  // "YYYY-MM-DD"
   asOf: string | null;      // 수익률 기준일 "YYYY-MM-DD" (직전 영업일)
   ter: number | null;       // 총보수율 (%) — F34763
@@ -2325,29 +2357,36 @@ async function fetchETFReturns(itemcode: string): Promise<ReturnData | null> {
     const token = getEtcCheckToken();
     const url = `https://www.etfcheck.co.kr/user/etp/getEtpItemInfo?code=${itemcode}&befDate=${befDate}`;
 
-    const resp = await new Promise<any>((resolve, reject) => {
-      const req = https.get(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0',
-          'Referer': 'https://www.etfcheck.co.kr/',
-          'Checkclient': token,
-          'Accept': 'application/json',
-        },
-      }, res => {
-        let body = '';
-        res.on('data', c => body += c);
-        res.on('end', () => {
-          try { resolve(JSON.parse(body)); }
-          catch { reject(new Error('ETFCheck parse error')); }
+    // ETFCheck 총수익률 + Naver etfAnalysis 1D(시장가) 병렬 조회
+    const [resp, naverAnalysis] = await Promise.all([
+      new Promise<any>((resolve, reject) => {
+        const req = https.get(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0',
+            'Referer': 'https://www.etfcheck.co.kr/',
+            'Checkclient': token,
+            'Accept': 'application/json',
+          },
+        }, res => {
+          let body = '';
+          res.on('data', c => body += c);
+          res.on('end', () => {
+            try { resolve(JSON.parse(body)); }
+            catch { reject(new Error('ETFCheck parse error')); }
+          });
         });
-      });
-      req.on('error', reject);
-      req.setTimeout(10000, () => req.destroy(new Error('timeout')));
-    });
+        req.on('error', reject);
+        req.setTimeout(10000, () => req.destroy(new Error('timeout')));
+      }),
+      fetchEtfAnalysisRaw(itemcode).catch(() => null),
+    ]);
+    const { d1: naverD1 } = extractNaverD1(naverAnalysis);
 
     if (!resp.success || !resp.results?.[0]) {
       // ETFCheck 데이터 없음 → Naver 상세 페이지 fallback (총보수·상장일)
-      return fetchNaverFallbackReturns(itemcode);
+      const fb = await fetchNaverFallbackReturns(itemcode);
+      if (fb) fb.d1 = naverD1;
+      return fb;
     }
 
     const r = resp.results[0];
@@ -2380,6 +2419,7 @@ async function fetchETFReturns(itemcode: string): Promise<ReturnData | null> {
       y3:  pf(r.W01007),      // 3Y 누적 총수익률
       y5:  pf(r.W01008),      // 5Y 누적 총수익률
       y10: pf(r.W01009),      // 10Y 누적 총수익률
+      d1:  naverD1,           // 1D 시장가 등락률 (직전 종가 기준)
       listDate,
       asOf,
       ter:      pf(r.F34763), // 총보수 (운용+신탁+사무관리+지정참가회사)
@@ -2411,6 +2451,7 @@ async function fetchNaverFallbackReturns(itemcode: string): Promise<ReturnData |
 
     const data: ReturnData = {
       m1: null, m3: null, m6: null, ytd: null, y1: null, y3: null, y5: null, y10: null,
+      d1: null,
       listDate,
       asOf: null,
       ter,
