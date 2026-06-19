@@ -2207,6 +2207,8 @@ async function refresh() {
       document.getElementById('content').classList.remove('hidden');
       renderBacktest();
     }
+    // 데이터 기준 시각 캡션 (추가 호출 없음 — 표시만)
+    stampDataTime();
   } catch (err) {
     console.error('refresh failed:', err);
     document.getElementById('loading').classList.add('hidden');
@@ -2215,6 +2217,31 @@ async function refresh() {
   } finally {
     if (window._loadingSafety) { clearTimeout(window._loadingSafety); window._loadingSafety = null; }
   }
+}
+
+// 각 탭 상단에 "데이터 기준 시각" 캡션 삽입 (네트워크 호출 0 — 이미 받은 시점 표시)
+function stampDataTime() {
+  const content = document.getElementById('content');
+  if (!content) return;
+  // 백테스트 탭은 자체적으로 기간 표시가 있어 생략
+  if (currentTab === 'backtest') return;
+  let txt;
+  if (window.__SNAPSHOT_TIME__) {
+    txt = '📸 스냅샷 기준 ' + window.__SNAPSHOT_TIME__ + ' KST';
+  } else {
+    const now = new Date().toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+    txt = '🟢 데이터 기준 ' + now + ' (실시간)';
+  }
+  let cap = document.getElementById('dataTimeStamp');
+  if (!cap) {
+    cap = document.createElement('div');
+    cap.id = 'dataTimeStamp';
+    cap.style.cssText = 'text-align:right;font-size:11px;color:var(--text-muted);margin:-4px 2px 8px;';
+    content.insertBefore(cap, content.firstChild);
+  } else if (cap.parentElement !== content) {
+    content.insertBefore(cap, content.firstChild);
+  }
+  cap.textContent = txt;
 }
 
 let _naverReturnsData = {};
