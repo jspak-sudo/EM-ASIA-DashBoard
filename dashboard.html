@@ -54,6 +54,9 @@
   #naverEtfList thead { position: sticky; top: 53px; z-index: 20; }
   body.embed-mode #naverEtfList thead { top: 0; }
   #naverEtfList thead td, #naverEtfList thead th { background: var(--bg-base); }
+  /* 구성종목 상세 테이블은 자체 스크롤 박스 상단(top:0)에 고정 — 위 규칙의 top:53px 상속 방지 */
+  #naverEtfList table.holdings-table thead { top: 0; z-index: 10; }
+  #naverEtfList table.holdings-table thead th { background: #111827; }
 
   /* Mirae button */
   .btn-tiger { background: var(--mirae-orange); color: #fff; border-radius: 24px; padding: 0.6rem 1.5rem; font-weight: 700; transition: all 0.2s; }
@@ -2621,7 +2624,7 @@ function renderNaverEtfList(items, total, sort, categoryMarketSums) {
   const thC = thS;  // ?? ????? ?
 
   html += `<p class="text-[10px] text-emerald-500/70 mb-2">클릭하면 구성 종목이 펼쳐집니다 <span class="text-gray-600 ml-2">· 수익률은 분배금 포함 총수익률(Total Return)</span></p>`;
-  html += '<div class="overflow-x-auto"><table class="w-full text-xs">';
+  html += '<div><table class="w-full text-xs">';  /* 가로 스크롤 래퍼 제거 — 헤더 세로 틀고정(sticky) 활성화 */
   html += `<thead>
   <tr>
     <td colspan="5" class="pb-0 pt-1"></td>
@@ -2774,13 +2777,23 @@ async function loadReturns(codes) {
   if (_returnsAbort) { _returnsAbort.abort(); _returnsAbort = null; }
   const myId = ++_returnsLoadId;
 
-  // 기준일 배지 초기화 (새 로드마다 리셋)
-  const badge = document.getElementById('returns_asof_badge');
-  if (badge) { badge.textContent = ''; delete badge.dataset.set; }
-
   const CHUNK = 200;
   const missing = codes.filter(c => !Object.prototype.hasOwnProperty.call(_naverReturnsData, c));
-  if (!missing.length) return;
+
+  // 기준일 배지: 새로 가져올 데이터가 있을 때만 리셋 (탭 재방문·캐시 적중 시 배지 유지)
+  const badge = document.getElementById('returns_asof_badge');
+  if (badge && missing.length) { badge.textContent = ''; delete badge.dataset.set; }
+
+  if (!missing.length) {
+    // 전부 캐시 — 캐시된 데이터에서 기준일을 복원해 배지가 사라지지 않도록 보장
+    if (badge && !badge.dataset.set) {
+      for (const c of codes) {
+        const d = _naverReturnsData[c];
+        if (d?.asOf) { badge.textContent = d.asOf + ' 기준'; badge.dataset.set = '1'; break; }
+      }
+    }
+    return;
+  }
 
   const total = missing.length;
   let done = 0;
@@ -2959,7 +2972,7 @@ async function toggleHoldings(itemcode) {
     // ???? ??(max-height 400px)
     h += `<div class="overflow-y-auto" style="max-height:400px">`;
     const col3Header = hasWeights ? '비중' : (hasShares ? '수량' : '');
-    h += `<table class="w-full text-[11px]"><thead class="sticky top-0 bg-gray-900 z-10"><tr class="text-gray-500 border-b border-gray-800">
+    h += `<table class="w-full text-[11px] holdings-table"><thead class="sticky top-0 bg-gray-900 z-10"><tr class="text-gray-500 border-b border-gray-800">
       <th class="text-left pb-1 pr-2 w-6 text-gray-600">#</th>
       <th class="text-left pb-1 pr-3">종목</th>
       <th class="text-right pb-1 pr-3">${col3Header}</th>
