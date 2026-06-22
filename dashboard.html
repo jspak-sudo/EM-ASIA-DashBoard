@@ -3648,7 +3648,7 @@ function renderLiquidity(data) {
     { id: 'liqRrpChart', title: 'Reverse Repo (RRPONTSYD)', keys: ['rrp'], spxOverlay: true, height: 280, desc: 'MMF 등이 Fed에 예치한 역레포 잔액 (단위: $T)', canLog: true, defaultScale: 'lin' },
     { id: 'liqTgaChart', title: 'Treasury General Account (WTREGEN)', keys: ['tga'], spxOverlay: true, height: 280, desc: '재무부 Fed 예치 잔액', canLog: true },
     { id: 'liqM2Chart', title: 'M2 Money Supply (M2SL)', keys: ['m2'], spxOverlay: false, height: 280, desc: 'M2 광의통화', canLog: true },
-    { id: 'liqMoneyMultChart', title: '통화승수 — 연준 공급 대비 시장 통화량 (M2 ÷ 본원통화)', keys: [], spxOverlay: false, height: 320, desc: '좌축 $T: M2 + 본원통화(지급준비금+유통화폐) · 우축 배수: 통화승수(M2÷본원통화). 승수 ↑=신용창조 활발, ↓=돈이 갇힘 (2008 ~9배 → 현재 ~4배)', canLog: false, customType: 'moneyMult' },
+    { id: 'liqMoneyMultChart', title: '통화승수 — 연준 공급 대비 시장 통화량 (M2 ÷ 본원통화)', keys: [], spxOverlay: false, height: 320, desc: '좌축 $T: M2 + 본원통화(BOGMBASE) · 우축 배수: 통화승수(M2÷본원통화). 승수 ↑=신용창조 활발, ↓=돈이 갇힘 (2008 ~9배→현재 ~4배). ※본원통화 ≈ 지급준비금+유통화폐, 차이는 은행 금고 내 현금(vault cash) 처리 방식 — 약 0.5%', canLog: false, customType: 'moneyMult' },
     { id: 'liqMmfChart', title: 'MMF 소매 잔고 (WRMFNS)', keys: ['mmf_retail'], spxOverlay: true, height: 300, desc: '소매(Retail) MMF 잔고 — 고금리일수록 상승, 위험선호 시 감소 | 기관 MMF 주간 데이터는 2021년 이후 FRED 미제공', canLog: false, customType: 'mmfStacked' },
   ];
 
@@ -4924,11 +4924,10 @@ function drawMoneyMultChart(period) {
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
   const cutoffStr = cutoff.toISOString().split('T')[0];
 
-  // 본원통화 기준축 = 지급준비금(주간) 날짜. M2(월간)·유통화폐 fill-forward
-  const resArr  = (_liqData.series.reserves?.data || []).filter(d => d.date >= cutoffStr);
-  const curArr  = (_liqData.series.currency?.data || []).filter(d => d.date >= cutoffStr);
-  const m2Arr   = (_liqData.series.m2?.data       || []).filter(d => d.date >= cutoffStr);
-  if (resArr.length < 2 || m2Arr.length < 1) {
+  // M2·본원통화 모두 월간 → M2 날짜를 기준축으로, 본원통화(BOGMBASE) fill-forward
+  const m2Arr   = (_liqData.series.m2?.data      || []).filter(d => d.date >= cutoffStr);
+  const baseArr = (_liqData.series.monbase?.data || []).filter(d => d.date >= cutoffStr);
+  if (m2Arr.length < 2 || baseArr.length < 1) {
     ctx.fillStyle = '#1a1d27'; ctx.fillRect(0,0,W,H);
     ctx.fillStyle = '#6b7280'; ctx.font = '12px sans-serif'; ctx.textAlign='center';
     ctx.fillText('데이터 부족', W/2, H/2); return;
@@ -4939,18 +4938,16 @@ function drawMoneyMultChart(period) {
     for (const dt of dates) { if (m.has(dt)) last = m.get(dt); out.set(dt, last); }
     return out;
   };
-  const dates = resArr.map(d => d.date).sort();
-  const mapCur = ffwd(curArr, dates);
-  const mapM2  = ffwd(m2Arr, dates);
+  const dates = m2Arr.map(d => d.date).sort();
+  const mapBase = ffwd(baseArr, dates);
 
-  // 포인트: $T 단위 + 승수
+  // 포인트: $T 단위 + 승수 (M2·본원통화 모두 십억$ → /1e3 = $T)
   const points = [];
   for (const dt of dates) {
-    const res = resArr.find(d => d.date === dt).value;        // 백만$
-    const cur = mapCur.get(dt); const m2 = mapM2.get(dt);
-    if (cur == null || m2 == null) continue;
-    const baseT = (res + cur) / 1e6;   // 본원통화 $T
-    const m2T   = m2 / 1e3;            // M2 $T (m2는 십억$)
+    const m2 = m2Arr.find(d => d.date === dt).value;   // 십억$
+    const base = mapBase.get(dt);                       // 십억$ (BOGMBASE)
+    if (base == null || m2 == null) continue;
+    const baseT = base / 1e3, m2T = m2 / 1e3;
     if (baseT <= 0) continue;
     points.push({ date: dt, base: baseT, m2: m2T, mult: m2T / baseT });
   }
@@ -5025,7 +5022,7 @@ function drawMoneyMultChart(period) {
   ctx.fillStyle = '#34d399'; ctx.fillRect(pad.left, 10, 14, 3);
   ctx.fillStyle = '#e2e8f0'; ctx.fillText('M2 $' + last.m2.toFixed(1) + 'T', pad.left + 18, 18);
   ctx.fillStyle = '#60a5fa'; ctx.fillRect(pad.left + 130, 10, 14, 3);
-  ctx.fillStyle = '#e2e8f0'; ctx.fillText('본원통화 $' + last.base.toFixed(2) + 'T', pad.left + 148, 18);
+  ctx.fillStyle = '#e2e8f0'; ctx.fillText('본원통화(BOGMBASE) $' + last.base.toFixed(2) + 'T', pad.left + 148, 18);
   ctx.fillStyle = '#fbbf24'; ctx.fillRect(pad.left + 300, 10, 14, 3);
   ctx.fillStyle = '#fbbf24'; ctx.fillText('승수 ' + last.mult.toFixed(2) + '배', pad.left + 318, 18);
 

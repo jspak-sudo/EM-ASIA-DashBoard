@@ -43,6 +43,8 @@ const SERIES: Record<string, { id: string; name: string; unit: string; freq: str
   // 자산 세부 분해
   treasuries: { id: 'WSHOTSL', name: 'U.S. Treasuries Held', unit: 'Millions $', freq: 'Weekly', category: 'core', description: '연준 보유 미국 국채' },
   mbs: { id: 'WSHOMCB', name: 'MBS Held', unit: 'Millions $', freq: 'Weekly', category: 'core', description: '연준 보유 모기지담보증권(MBS)' },
+  // 본원통화 (Monetary Base, 월간 공식값)
+  monbase: { id: 'BOGMBASE', name: 'Monetary Base', unit: 'Billions $', freq: 'Monthly', category: 'core', description: '본원통화 — 연준이 직접 공급한 돈 (지급준비금+민간보유현금)' },
   // 국채 만기·유형별 세부
   tre_notesbonds: { id: 'WSHONBNL', name: 'Treasury Notes & Bonds (Nominal)', unit: 'Millions $', freq: 'Weekly', category: 'core', description: '중장기 명목국채(Notes·Bonds)' },
   tre_bills: { id: 'WSHOBL', name: 'Treasury Bills', unit: 'Millions $', freq: 'Weekly', category: 'core', description: '단기국채(Bills, ≤1년)' },
