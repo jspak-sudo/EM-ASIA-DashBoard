@@ -40,6 +40,9 @@ const SERIES: Record<string, { id: string; name: string; unit: string; freq: str
   rrp: { id: 'RRPONTSYD', name: 'Reverse Repo (RRP)', unit: 'Billions $', freq: 'Daily', category: 'core', description: '역레포 잔고 — ↓이면 시장으로 유동성 유입' },
   tga: { id: 'WTREGEN', name: 'Treasury General Account', unit: 'Millions $', freq: 'Weekly', category: 'core', description: '재무부 현금 잔고 — ↓이면 시장에 돈 풀림' },
   reserves: { id: 'WRESBAL', name: 'Bank Reserves (WRESBAL)', unit: 'Millions $', freq: 'Weekly', category: 'core', description: '은행 시스템 지급준비금 — 시중 유동성의 핵심' },
+  // 자산 세부 분해
+  treasuries: { id: 'WSHOTSL', name: 'U.S. Treasuries Held', unit: 'Millions $', freq: 'Weekly', category: 'core', description: '연준 보유 미국 국채' },
+  mbs: { id: 'WSHOMCB', name: 'MBS Held', unit: 'Millions $', freq: 'Weekly', category: 'core', description: '연준 보유 모기지담보증권(MBS)' },
 
   // Tier 2: Credit / Stress
   hyspread: { id: 'BAMLH0A0HYM2', name: 'High Yield Spread', unit: '%', freq: 'Daily', category: 'stress', description: '하이일드 스프레드 — ↑이면 신용경색' },

@@ -3411,11 +3411,18 @@ function renderFedBalanceSheet(series) {
   };
   const Wsub = (x) => W(x) ? ` <span class="text-[9px] text-gray-500 font-normal">${W(x)}</span>` : '';
 
-  // 자산 항목 (연준이 보유) — 분할 데이터가 없어 단일 합계로
+  // 자산 항목 (연준이 보유) — 국채 / MBS / 기타로 분해
+  const aTre = v('treasuries');   // WSHOTSL, 백만$
+  const aMbs = v('mbs');          // WSHOMCB, 백만$
+  const aOther = Math.max(0, M.total - (aTre||0) - (aMbs||0));  // 프리미엄·대출·스왑·금증서 등
   const assets = [
-    { label:'국채 + MBS', en:'Securities Held', val:M.total, color:'#0891b2',
-      desc:'연준이 QE로 사들인 <b>미국 국채와 모기지채권(MBS)</b>. 연준 자산의 대부분. QE로 늘리고, QT(양적긴축)로 만기 도래분을 줄임.' },
-  ];
+    { label:'미국 국채', en:'U.S. Treasuries', val:aTre, color:'#0891b2',
+      desc:'연준이 보유한 <b>미국 국채</b>. 자산의 대부분. QE로 사들이고 QT로 만기분을 줄임 — 시중 유동성에 직접 영향.' },
+    { label:'주택저당증권', en:'MBS', val:aMbs, color:'#0e7490',
+      desc:'<b>모기지담보증권(MBS)</b>. 2008·2020 위기 때 주택시장 지원 위해 매입. QT로 천천히 축소 중.' },
+    { label:'기타 자산', en:'Other', val:aOther, color:'#155e75',
+      desc:'미상각 프리미엄, 대출(할인창구·유동성지원), 레포, 중앙은행 통화스왑, 금증서·SDR 등 나머지.' },
+  ].filter(x => x.val != null && x.val > 0);
   // 부채 항목 (연준이 갚을 돈, 큰 순서)
   const liab = [
     { label:'지급준비금', en:'Bank Reserves', val:M.reserves, color:'#ec4899',
@@ -3461,7 +3468,10 @@ function renderFedBalanceSheet(series) {
           <span class="text-[13px] text-cyan-300 font-bold">◀ 자산 (보유)</span>
           <span class="text-[12px] text-gray-300 font-bold">${T(M.total)}${Wsub(M.total)}</span>
         </div>
-        <div class="flex h-7 rounded overflow-hidden border border-gray-700 mb-2">${barSeg(assets)}</div>
+        <div class="flex h-7 rounded overflow-hidden border border-gray-700 mb-1">${barSeg(assets)}</div>
+        <div class="flex flex-wrap gap-x-3 gap-y-0.5 mb-2">
+          ${assets.map(it => `<span class="text-[10px]" style="color:${it.color}">● ${it.label} ${pct(it.val).toFixed(0)}%</span>`).join('')}
+        </div>
         <div class="space-y-2">${sideCards(assets)}</div>
       </div>
 
