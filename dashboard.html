@@ -3648,7 +3648,7 @@ function renderLiquidity(data) {
     { id: 'liqRrpChart', title: 'Reverse Repo (RRPONTSYD)', keys: ['rrp'], spxOverlay: true, height: 280, desc: 'MMF 등이 Fed에 예치한 역레포 잔액 (단위: $T)', canLog: true, defaultScale: 'lin' },
     { id: 'liqTgaChart', title: 'Treasury General Account (WTREGEN)', keys: ['tga'], spxOverlay: true, height: 280, desc: '재무부 Fed 예치 잔액', canLog: true },
     { id: 'liqM2Chart', title: 'M2 Money Supply (M2SL)', keys: ['m2'], spxOverlay: false, height: 280, desc: 'M2 광의통화', canLog: true },
-    { id: 'liqMoneyMultChart', title: '통화승수 — 연준 공급 대비 시장 통화량 (M2 ÷ 본원통화)', keys: [], spxOverlay: false, height: 320, desc: '좌축 $T: M2 + 본원통화(BOGMBASE) · 우축 배수: 통화승수(M2÷본원통화). 승수 ↑=신용창조 활발, ↓=돈이 갇힘 (2008 ~9배→현재 ~4배). ※본원통화 ≈ 지급준비금+유통화폐, 차이는 은행 금고 내 현금(vault cash) 처리 방식 — 약 0.5%', canLog: false, customType: 'moneyMult' },
+    { id: 'liqMoneyMultChart', title: '통화승수 — 연준 공급 대비 시장 통화량 (M2 ÷ 본원통화)', keys: [], spxOverlay: false, height: 320, desc: '좌축 $T: M2 + 본원통화(BOGMBASE) · 우축 배수: 통화승수(M2÷본원통화). 승수 ↑=신용창조 활발, ↓=돈이 갇힘 (2008 ~9배→현재 ~4배). ※본원통화 ≈ 지급준비금+유통화폐, 차이는 은행 금고 내 현금(vault cash) 처리 방식 — 약 0.5%', canLog: true, defaultScale: 'lin', customType: 'moneyMult' },
     { id: 'liqMmfChart', title: 'MMF 소매 잔고 (WRMFNS)', keys: ['mmf_retail'], spxOverlay: true, height: 300, desc: '소매(Retail) MMF 잔고 — 고금리일수록 상승, 위험선호 시 감소 | 기관 MMF 주간 데이터는 2021년 이후 FRED 미제공', canLog: false, customType: 'mmfStacked' },
   ];
 
@@ -4953,15 +4953,24 @@ function drawMoneyMultChart(period) {
   }
   if (points.length < 2) return;
 
+  // 로그 모드 (좌축 금액에만 적용, 우축 배수는 항상 선형)
+  const logMode = (window._liqScaleModes && window._liqScaleModes['liqMoneyMultChart']) === 'log';
+
   // 좌축(금액) / 우축(배수) 스케일
   const amtVals = points.flatMap(p => [p.m2, p.base]);
-  const lMin = 0, lMax = Math.max(...amtVals) * 1.08;
+  const lMaxRaw = Math.max(...amtVals), lMinPos = Math.min(...amtVals.filter(v => v > 0));
+  const lMin = logMode ? lMinPos * 0.9 : 0;
+  const lMax = logMode ? lMaxRaw * 1.1 : lMaxRaw * 1.08;
   const mults = points.map(p => p.mult);
   const rMin = Math.min(...mults) * 0.95, rMax = Math.max(...mults) * 1.05;
 
+  const chH = H - pad.top - pad.bottom;
+  const lg = Math.log10(lMax / lMin) || 1;
   const xOf = i => pad.left + (i / (points.length - 1)) * (W - pad.left - pad.right);
-  const yL  = v => pad.top + (1 - (v - lMin) / (lMax - lMin)) * (H - pad.top - pad.bottom);
-  const yR  = v => pad.top + (1 - (v - rMin) / (rMax - rMin)) * (H - pad.top - pad.bottom);
+  const yL  = v => logMode
+    ? pad.top + (1 - Math.log10(Math.max(v, lMin) / lMin) / lg) * chH
+    : pad.top + (1 - (v - lMin) / (lMax - lMin)) * chH;
+  const yR  = v => pad.top + (1 - (v - rMin) / (rMax - rMin)) * chH;
 
   // 배경
   ctx.fillStyle = '#1a1d27'; ctx.fillRect(0, 0, W, H);
@@ -4977,11 +4986,13 @@ function drawMoneyMultChart(period) {
   ctx.strokeStyle = '#2a2d3a'; ctx.lineWidth = 0.5;
   const yTicks = 5;
   for (let i = 0; i <= yTicks; i++) {
-    const v = lMin + (lMax - lMin) * (i / yTicks);
+    const v = logMode
+      ? lMin * Math.pow(lMax / lMin, i / yTicks)   // 로그: 등비 간격
+      : lMin + (lMax - lMin) * (i / yTicks);
     const y = yL(v);
     ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
     ctx.fillStyle = '#9ca3af'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
-    ctx.fillText('$' + v.toFixed(0) + 'T', pad.left - 4, y + 3);
+    ctx.fillText('$' + (v >= 10 ? v.toFixed(0) : v.toFixed(1)) + 'T', pad.left - 4, y + 3);
   }
   // 우축 라벨 (배수)
   ctx.textAlign = 'left';
