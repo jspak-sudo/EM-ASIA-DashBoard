@@ -3519,9 +3519,14 @@ function renderFedBalanceSheet(series, targetDate) {
     <div class="flex items-center justify-between mb-1 flex-wrap gap-2">
       <h2 class="text-sm font-bold text-white">🏦 연준(Fed) 대차대조표 <span class="text-cyan-400">${T(M.total)}</span>${Wsub(M.total)}</h2>
       <div class="flex items-center gap-2">
-        <input type="date" value="${asOf}" min="${minD}" max="${maxD}"
+        <input type="text" value="${asOf}" placeholder="YYYY-MM-DD" maxlength="10" inputmode="numeric"
+          title="날짜를 직접 입력(YYYY-MM-DD) 후 Enter — 해당 주 수요일로 자동 정렬"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();fedBSsetDate(this.value);}"
+          onblur="fedBSsetDate(this.value)"
+          class="bg-[#0f1522] border border-[#2a334a] text-gray-200 text-[11px] rounded px-2 py-1 w-28 text-center focus:border-cyan-500 outline-none">
+        <input type="date" value="${asOf}" min="${minD}" max="${maxD}" title="달력으로 선택"
           onchange="fedBSsetDate(this.value)"
-          class="bg-[#0f1522] border border-[#2a334a] text-gray-200 text-[11px] rounded px-2 py-1">
+          class="bg-[#0f1522] border border-[#2a334a] text-gray-400 text-[11px] rounded px-1 py-1 w-7 overflow-hidden">
         ${!isLatest ? `<button onclick="fedBSsetDate('')" class="text-[10px] bg-[#e37500] hover:bg-[#ff8a1a] text-white px-2 py-1 rounded">최신</button>` : ''}
       </div>
     </div>
@@ -3573,7 +3578,19 @@ function fedBSsetDate(date) {
   if (!_liqData || !_liqData.series) return;
   const panel = document.getElementById('fedBSpanel');
   if (!panel) return;
-  panel.outerHTML = renderFedBalanceSheet(_liqData.series, date || undefined);
+  let target = (date || '').trim();
+  if (target) {
+    // 입력 정규화: 8자리 숫자(20020618)도 허용 → YYYY-MM-DD
+    const digits = target.replace(/[^0-9]/g, '');
+    if (/^\d{8}$/.test(digits)) target = digits.slice(0,4)+'-'+digits.slice(4,6)+'-'+digits.slice(6,8);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(target)) return;  // 형식 안 맞으면 무시
+    // 가용 범위로 클램프
+    const arr = _liqData.series.fedbs?.data || [];
+    const minD = arr[0]?.date, maxD = arr[arr.length-1]?.date;
+    if (minD && target < minD) target = minD;
+    if (maxD && target > maxD) target = maxD;
+  }
+  panel.outerHTML = renderFedBalanceSheet(_liqData.series, target || undefined);
 }
 window.fedBSsetDate = fedBSsetDate;
 
