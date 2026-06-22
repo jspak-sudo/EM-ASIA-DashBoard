@@ -3511,7 +3511,8 @@ function renderFedBalanceSheet(series, targetDate) {
   // 날짜 선택: WALCL(주간) 날짜 목록 → 드롭다운 (최신이 위)
   const wDates = (series.fedbs?.data || []).map(p => p.date);
   const minD = wDates[0] || '', maxD = wDates[wDates.length - 1] || '';
-  const isLatest = !targetDate || baseDate === maxD;
+  // 스냅된 실제 기준일(asOf)로 최신 여부 판정 (예: 6/19 선택 → 6/17 스냅 → 최신)
+  const isLatest = asOf === maxD;
 
   return `
   <div class="card p-4 mb-4" id="fedBSpanel">
