@@ -43,6 +43,10 @@ const SERIES: Record<string, { id: string; name: string; unit: string; freq: str
   // 자산 세부 분해
   treasuries: { id: 'WSHOTSL', name: 'U.S. Treasuries Held', unit: 'Millions $', freq: 'Weekly', category: 'core', description: '연준 보유 미국 국채' },
   mbs: { id: 'WSHOMCB', name: 'MBS Held', unit: 'Millions $', freq: 'Weekly', category: 'core', description: '연준 보유 모기지담보증권(MBS)' },
+  // 국채 만기·유형별 세부
+  tre_notesbonds: { id: 'WSHONBNL', name: 'Treasury Notes & Bonds (Nominal)', unit: 'Millions $', freq: 'Weekly', category: 'core', description: '중장기 명목국채(Notes·Bonds)' },
+  tre_bills: { id: 'WSHOBL', name: 'Treasury Bills', unit: 'Millions $', freq: 'Weekly', category: 'core', description: '단기국채(Bills, ≤1년)' },
+  tre_tips: { id: 'WSHONBIIL', name: 'Treasury TIPS (Inflation-Indexed)', unit: 'Millions $', freq: 'Weekly', category: 'core', description: '물가연동국채(TIPS)' },
 
   // Tier 2: Credit / Stress
   hyspread: { id: 'BAMLH0A0HYM2', name: 'High Yield Spread', unit: '%', freq: 'Daily', category: 'stress', description: '하이일드 스프레드 — ↑이면 신용경색' },
