@@ -3381,28 +3381,40 @@ function renderLiquidityError(msg) {
 window.renderLiquidityError = renderLiquidityError;
 
 // ── 연준 대차대조표 T자형 도식 + 계정과목 설명 ──────────────────────────────
-function renderFedBalanceSheet(series) {
-  const v = (k) => series[k]?.latest?.value ?? null;   // 원단위(백만$ 또는 십억$)
+// targetDate(YYYY-MM-DD) 지정 시 그 시점 기준으로 재구성 (미지정=최신)
+function renderFedBalanceSheet(series, targetDate) {
+  // 기준일: 지정 없으면 대차대조표(WALCL) 최신일
+  const baseDate = targetDate || series.fedbs?.latest?.date || null;
+  // 해당 날짜 '이하' 가장 최근 데이터포인트 찾기 (모든 항목을 같은 기준일로 정렬)
+  const ptOn = (k) => {
+    const arr = series[k]?.data;
+    if (!arr || !arr.length) return null;
+    if (!baseDate) return arr[arr.length - 1];
+    let found = null;
+    for (let i = arr.length - 1; i >= 0; i--) { if (arr[i].date <= baseDate) { found = arr[i]; break; } }
+    return found || arr[0];
+  };
+  const v = (k) => { const p = ptOn(k); return p ? p.value : null; };   // 원단위(백만$ 또는 십억$)
+  const dOf = (k) => { const p = ptOn(k); return p ? p.date : null; };  // 항목별 실제 기준일
   // 단위 통일: 모두 백만$(M$) 기준으로 환산 → 표시는 조($T = ÷1e6)
   const M = {
     total:    v('fedbs'),                                  // WALCL, 백만$
     reserves: v('reserves'),                               // WRESBAL, 백만$
     currency: v('currency'),                               // WCURCIR, 백만$
     tga:      v('tga'),                                    // WTREGEN, 백만$
-    rrp:      v('rrp') != null ? v('rrp') * 1000 : null,   // RRP 십억$ → 백만$
+    rrp:      v('rrp') != null ? v('rrp') * 1000 : null,   // RRP 십억$ → 백만$ (기준일 정렬)
   };
-  if (M.total == null) return '';  // 데이터 없으면 도식 생략
+  if (M.total == null) return '<div class="card p-4 mb-4 text-gray-500 text-sm" id="fedBSpanel">해당 기간 대차대조표 데이터가 없습니다.</div>';
 
   const known = (M.reserves||0) + (M.currency||0) + (M.tga||0) + (M.rrp||0);
   const other = Math.max(0, M.total - known);              // 기타부채+자본
   const T = (x) => x == null ? '-' : '$' + (x/1e6).toFixed(2) + 'T';
   const pct = (x) => x == null ? 0 : (x / M.total * 100);
-  const asOf = series.fedbs?.latest?.date || '';
-  // 항목별 기준일 (series 키 → latest.date)
-  const dOf = (k) => series[k]?.latest?.date || null;
-  // 원화 병기 (전일 환율, FRED DEXKOUS). x는 백만$ 단위
-  const fxRate = series.usdkrw?.latest?.value || null;
-  const fxDate = series.usdkrw?.latest?.date || '';
+  const asOf = dOf('fedbs') || '';
+  // 원화 병기 (기준일 시점 환율, FRED DEXKOUS). x는 백만$ 단위
+  const fxPt = ptOn('usdkrw');
+  const fxRate = fxPt ? fxPt.value : null;
+  const fxDate = fxPt ? fxPt.date : '';
   const W = (x) => {
     if (x == null || fxRate == null) return '';
     const krw = x * 1e6 * fxRate;          // 백만$ → 원
@@ -3496,11 +3508,25 @@ function renderFedBalanceSheet(series) {
       ${it.sub ? treSubHtml(it.sub, it.val) : ''}
     </div>`).join('');
 
+  // 날짜 선택: WALCL(주간) 날짜 목록 → 드롭다운 (최신이 위)
+  const wDates = (series.fedbs?.data || []).map(p => p.date);
+  const minD = wDates[0] || '', maxD = wDates[wDates.length - 1] || '';
+  const isLatest = !targetDate || baseDate === maxD;
+
   return `
-  <div class="card p-4 mb-4">
-    <div class="flex items-center justify-between mb-1">
+  <div class="card p-4 mb-4" id="fedBSpanel">
+    <div class="flex items-center justify-between mb-1 flex-wrap gap-2">
       <h2 class="text-sm font-bold text-white">🏦 연준(Fed) 대차대조표 <span class="text-cyan-400">${T(M.total)}</span>${Wsub(M.total)}</h2>
+      <div class="flex items-center gap-2">
+        <input type="date" value="${asOf}" min="${minD}" max="${maxD}"
+          onchange="fedBSsetDate(this.value)"
+          class="bg-[#0f1522] border border-[#2a334a] text-gray-200 text-[11px] rounded px-2 py-1">
+        ${!isLatest ? `<button onclick="fedBSsetDate('')" class="text-[10px] bg-[#e37500] hover:bg-[#ff8a1a] text-white px-2 py-1 rounded">최신</button>` : ''}
+      </div>
+    </div>
+    <div class="flex items-center justify-between mb-2 flex-wrap gap-1">
       <span class="text-[10px] text-gray-500">기준일 ${asOf} · 출처 FRED${fxRate ? ` · 환율 ₩${fxRate.toLocaleString()}/$ (${fxDate})` : ''}</span>
+      ${!isLatest ? `<span class="text-[10px] text-amber-300">📌 과거 시점 조회 중 (최신 ${maxD})</span>` : ''}
     </div>
     <p class="text-[11px] text-gray-400 mb-3"><b class="text-cyan-300">자산</b>(연준이 보유한 것) = <b class="text-pink-300">부채</b>(연준이 갚을 것). 양쪽 합계는 항상 같습니다 (회계 항등식).</p>
 
@@ -3540,6 +3566,15 @@ function renderFedBalanceSheet(series) {
     </p>
   </div>`;
 }
+
+// 대차대조표 기준일 변경 (서버 호출 없이 클라이언트 데이터로 재구성)
+function fedBSsetDate(date) {
+  if (!_liqData || !_liqData.series) return;
+  const panel = document.getElementById('fedBSpanel');
+  if (!panel) return;
+  panel.outerHTML = renderFedBalanceSheet(_liqData.series, date || undefined);
+}
+window.fedBSsetDate = fedBSsetDate;
 
 function renderLiquidity(data) {
   _liqData = data;
