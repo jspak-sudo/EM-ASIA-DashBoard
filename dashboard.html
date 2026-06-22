@@ -3398,6 +3398,8 @@ function renderFedBalanceSheet(series) {
   const T = (x) => x == null ? '-' : '$' + (x/1e6).toFixed(2) + 'T';
   const pct = (x) => x == null ? 0 : (x / M.total * 100);
   const asOf = series.fedbs?.latest?.date || '';
+  // 항목별 기준일 (series 키 → latest.date)
+  const dOf = (k) => series[k]?.latest?.date || null;
   // 원화 병기 (전일 환율, FRED DEXKOUS). x는 백만$ 단위
   const fxRate = series.usdkrw?.latest?.value || null;
   const fxDate = series.usdkrw?.latest?.date || '';
@@ -3419,40 +3421,40 @@ function renderFedBalanceSheet(series) {
   const trNB = v('tre_notesbonds'), trBill = v('tre_bills'), trTips = v('tre_tips');
   const trEtc = aTre != null ? Math.max(0, aTre - (trNB||0) - (trBill||0) - (trTips||0)) : null; // 물가보상분 등
   const treSub = [
-    { label:'Notes & Bonds', kr:'중장기 명목국채', val:trNB,   fred:'WSHONBNL' },
-    { label:'Bills',         kr:'단기국채(≤1년)',  val:trBill, fred:'WSHOBL' },
-    { label:'TIPS',          kr:'물가연동국채',     val:trTips, fred:'WSHONBIIL' },
-    { label:'기타',          kr:'물가보상분 등',    val:trEtc,  fred:'' },
+    { label:'Notes & Bonds', kr:'중장기 명목국채', val:trNB,   fred:'WSHONBNL', date:dOf('tre_notesbonds') },
+    { label:'Bills',         kr:'단기국채(≤1년)',  val:trBill, fred:'WSHOBL',    date:dOf('tre_bills') },
+    { label:'TIPS',          kr:'물가연동국채',     val:trTips, fred:'WSHONBIIL', date:dOf('tre_tips') },
+    { label:'기타',          kr:'물가보상분 등',    val:trEtc,  fred:'',          date:dOf('treasuries') },
   ].filter(x => x.val != null && x.val > 0);
   const pctOf = (x, base) => base ? (x/base*100) : 0;
 
   const assets = [
-    { label:'미국 국채', en:'U.S. Treasuries', fred:'WSHOTSL',
+    { label:'미국 국채', en:'U.S. Treasuries', fred:'WSHOTSL', date:dOf('treasuries'),
       full:'Securities Held Outright: U.S. Treasury Securities', val:aTre, color:'#0891b2',
       desc:'연준이 보유한 <b>미국 국채</b>. 자산의 대부분. QE로 사들이고 QT로 만기분을 줄임 — 시중 유동성에 직접 영향.',
       sub: treSub },
-    { label:'주택저당증권', en:'MBS', fred:'WSHOMCB',
+    { label:'주택저당증권', en:'MBS', fred:'WSHOMCB', date:dOf('mbs'),
       full:'Securities Held Outright: Mortgage-Backed Securities', val:aMbs, color:'#0e7490',
       desc:'<b>모기지담보증권(MBS)</b>. 2008·2020 위기 때 주택시장 지원 위해 매입. QT로 천천히 축소 중.' },
-    { label:'기타 자산', en:'Other', fred:'WALCL − 국채 − MBS',
+    { label:'기타 자산', en:'Other', fred:'WALCL − 국채 − MBS', date:dOf('fedbs'),
       full:'미상각 프리미엄·대출·레포·통화스왑·금증서 등', val:aOther, color:'#155e75',
       desc:'미상각 프리미엄, 대출(할인창구·유동성지원), 레포, 중앙은행 통화스왑, 금증서·SDR 등 나머지.' },
   ].filter(x => x.val != null && x.val > 0);
   // 부채 항목 (연준이 갚을 돈, 큰 순서)
   const liab = [
-    { label:'지급준비금', en:'Bank Reserves', fred:'WRESBAL',
+    { label:'지급준비금', en:'Bank Reserves', fred:'WRESBAL', date:dOf('reserves'),
       full:'Reserve Balances with Federal Reserve Banks', val:M.reserves, color:'#ec4899',
       desc:'시중은행이 연준에 맡긴 돈. <b>시장 유동성의 핵심</b> — 많을수록 은행이 굴릴 돈이 풍부(완화적). QT로 감소, QE로 증가.' },
-    { label:'유통 화폐', en:'Currency', fred:'WCURCIR',
+    { label:'유통 화폐', en:'Currency', fred:'WCURCIR', date:dOf('currency'),
       full:'Currency in Circulation', val:M.currency, color:'#22c55e',
       desc:'실물 지폐·동전. 경제규모 따라 완만히 늘어나는 <b>구조적 항목</b>(유동성 분석에선 거의 고정).' },
-    { label:'재무부 계정', en:'TGA', fred:'WTREGEN',
+    { label:'재무부 계정', en:'TGA', fred:'WTREGEN', date:dOf('tga'),
       full:'Deposits: U.S. Treasury, General Account', val:M.tga, color:'#a78bfa',
       desc:'미 재무부의 연준 예금(정부 통장). <b>늘면 시중 돈을 빨아들이고</b>(긴축 효과), 줄면 시중에 푼다. 국채발행·세금에 따라 출렁.' },
-    { label:'역레포', en:'Reverse Repo', fred:'RRPONTSYD',
+    { label:'역레포', en:'Reverse Repo', fred:'RRPONTSYD', date:dOf('rrp'),
       full:'Overnight Reverse Repurchase Agreements', val:M.rrp, color:'#f97316',
       desc:'MMF 등이 하루짜리로 연준에 맡긴 돈. <b>여유 유동성의 저수지</b> — 줄면 그 돈이 시중·준비금으로 이동(완화적).' },
-    { label:'기타·자본', en:'Other', fred:'WALCL − 부채4종',
+    { label:'기타·자본', en:'Other', fred:'WALCL − 부채4종', date:dOf('fedbs'),
       full:'연준 자본금, 기타 예금 등', val:other, color:'#64748b',
       desc:'연준 자본금, 기타 예금 등 나머지 부채.' },
   ].filter(x => x.val != null && x.val > 0);
@@ -3461,15 +3463,20 @@ function renderFedBalanceSheet(series) {
     `<div title="${it.label} ${T(it.val)}" style="width:${pct(it.val).toFixed(2)}%;background:${it.color}" class="h-full"></div>`
   ).join('');
 
-  // 국채 하위 분해 미니 막대+칩 (A안)
+  // 국채 하위 분해 (A안) — 항목별 비중·금액·원화·기준일
   const treSubHtml = (sub, base) => {
     if (!sub || !sub.length) return '';
-    const seg = sub.map(s => `<div title="${s.label} ${T(s.val)}" style="width:${pctOf(s.val,base).toFixed(2)}%;background:${s.color||'#0891b2'};opacity:${0.4+0.5*pctOf(s.val,base)/100}" class="h-full"></div>`).join('');
     return `
       <div class="mt-2 pt-2 border-t border-gray-700/50">
         <div class="text-[10px] text-gray-500 mb-1">↳ 국채 만기·유형별</div>
-        <div class="flex flex-wrap gap-x-2 gap-y-0.5">
-          ${sub.map(s => `<span class="text-[10px] text-cyan-300/90">${s.label} <b>${pctOf(s.val,base).toFixed(0)}%</b> <span class="text-gray-500">${T(s.val)}${s.fred?' · '+s.fred:''}</span></span>`).join('')}
+        <div class="space-y-0.5">
+          ${sub.map(s => `<div class="text-[10px] text-cyan-300/90 flex flex-wrap items-baseline gap-x-1.5">
+            <b>${s.label}</b> <b>${pctOf(s.val,base).toFixed(0)}%</b>
+            <span class="text-gray-400">${T(s.val)}</span>
+            <span class="text-gray-500">${W(s.val)}</span>
+            ${s.fred?`<span class="text-gray-600">· ${s.fred}</span>`:''}
+            ${s.date?`<span class="text-gray-600">· ${s.date}</span>`:''}
+          </div>`).join('')}
         </div>
       </div>`;
   };
@@ -3481,7 +3488,10 @@ function renderFedBalanceSheet(series) {
         <span class="text-[12px] font-bold text-gray-200">${it.label} <span class="text-[9px] text-gray-500">${it.en}${it.fred?' · '+it.fred:''}</span></span>
         <span class="text-[12px] font-bold" style="color:${it.color}">${T(it.val)}${Wsub(it.val)} <span class="text-[9px] text-gray-500">${pct(it.val).toFixed(0)}%</span></span>
       </div>
-      ${it.full?`<p class="text-[9px] text-gray-600 mt-0.5 italic">FRED: ${it.full}</p>`:''}
+      <div class="flex items-center justify-between mt-0.5">
+        ${it.full?`<span class="text-[9px] text-gray-600 italic">FRED: ${it.full}</span>`:'<span></span>'}
+        ${it.date?`<span class="text-[9px] text-gray-500 whitespace-nowrap">📅 ${it.date}</span>`:''}
+      </div>
       <p class="text-[10px] text-gray-400 mt-1 leading-snug">${it.desc}</p>
       ${it.sub ? treSubHtml(it.sub, it.val) : ''}
     </div>`).join('');
