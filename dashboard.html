@@ -3483,12 +3483,10 @@ function renderLiquidity(data) {
 
   // Current values summary
   const summaryCards = [
-    { key: 'reserves', label: 'Bank Reserves', series: series.reserves, fmt: v => '$' + (v/1e6).toFixed(2) + 'T', color: 'text-pink-400' },
-    { key: 'fedbs', label: 'Fed Balance Sheet', series: series.fedbs, fmt: v => '$' + (v/1e6).toFixed(2) + 'T', color: 'text-cyan-400' },
+    // 지급준비금·연준총자산·TGA·역레포는 상단 대차대조표 도식과 중복 → 제외
+    // 도식에 없는 고유 지표만 표시
     { key: 'm2', label: 'M2 통화', series: series.m2, fmt: v => '$' + (v/1e3).toFixed(1) + 'T', color: 'text-green-400' },
     { key: 'fedfunds', label: 'Fed Funds Rate', series: series.fedfunds, fmt: v => v.toFixed(2) + '%', color: 'text-yellow-400' },
-    { key: 'rrp', label: 'Reverse Repo', series: series.rrp, fmt: v => '$' + (v/1000).toFixed(3) + 'T', color: 'text-orange-400' },
-    { key: 'tga', label: 'TGA', series: series.tga, fmt: v => '$' + (v/1e6).toFixed(3) + 'T', color: 'text-purple-400' },
     { key: 'mmf_total', label: 'MMF 소매잔고', series: series.mmf_total, fmt: v => '$' + (v/1000).toFixed(2) + 'T', color: 'text-emerald-400' },
   ];
 
