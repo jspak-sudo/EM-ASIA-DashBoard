@@ -3399,17 +3399,22 @@ function renderFedBalanceSheet(series) {
   const pct = (x) => x == null ? 0 : (x / M.total * 100);
   const asOf = series.fedbs?.latest?.date || '';
 
-  // 부채 항목 (큰 순서)
+  // 자산 항목 (연준이 보유) — 분할 데이터가 없어 단일 합계로
+  const assets = [
+    { label:'국채 + MBS', en:'Securities Held', val:M.total, color:'#0891b2',
+      desc:'연준이 QE로 사들인 <b>미국 국채와 모기지채권(MBS)</b>. 연준 자산의 대부분. QE로 늘리고, QT(양적긴축)로 만기 도래분을 줄임.' },
+  ];
+  // 부채 항목 (연준이 갚을 돈, 큰 순서)
   const liab = [
-    { key:'reserves', label:'지급준비금', en:'Bank Reserves', val:M.reserves, color:'#ec4899',
-      desc:'시중은행이 Fed에 맡긴 돈. <b>시장 유동성의 핵심</b> — 많을수록 은행이 굴릴 돈이 풍부(완화적). QT로 감소, QE로 증가.' },
-    { key:'currency', label:'유통 화폐', en:'Currency', val:M.currency, color:'#22c55e',
-      desc:'실물 지폐·동전. 경제규모 따라 완만히 증가하는 <b>구조적 항목</b>(유동성 분석에선 거의 고정).' },
-    { key:'tga', label:'재무부 계정', en:'TGA', val:M.tga, color:'#a78bfa',
-      desc:'미 재무부의 Fed 예금(정부 통장). <b>늘면 시중 돈을 빨아들이고</b>(긴축 효과), 줄면 시중에 푼다. 국채발행·세금에 따라 출렁.' },
-    { key:'rrp', label:'역레포', en:'Reverse Repo', val:M.rrp, color:'#f97316',
-      desc:'MMF 등이 하루짜리로 Fed에 맡긴 돈. <b>여유 유동성의 저수지</b> — 줄면 그 돈이 시중·준비금으로 이동(완화적).' },
-    { key:'other', label:'기타·자본', en:'Other', val:other, color:'#64748b',
+    { label:'지급준비금', en:'Bank Reserves', val:M.reserves, color:'#ec4899',
+      desc:'시중은행이 연준에 맡긴 돈. <b>시장 유동성의 핵심</b> — 많을수록 은행이 굴릴 돈이 풍부(완화적). QT로 감소, QE로 증가.' },
+    { label:'유통 화폐', en:'Currency', val:M.currency, color:'#22c55e',
+      desc:'실물 지폐·동전. 경제규모 따라 완만히 늘어나는 <b>구조적 항목</b>(유동성 분석에선 거의 고정).' },
+    { label:'재무부 계정', en:'TGA', val:M.tga, color:'#a78bfa',
+      desc:'미 재무부의 연준 예금(정부 통장). <b>늘면 시중 돈을 빨아들이고</b>(긴축 효과), 줄면 시중에 푼다. 국채발행·세금에 따라 출렁.' },
+    { label:'역레포', en:'Reverse Repo', val:M.rrp, color:'#f97316',
+      desc:'MMF 등이 하루짜리로 연준에 맡긴 돈. <b>여유 유동성의 저수지</b> — 줄면 그 돈이 시중·준비금으로 이동(완화적).' },
+    { label:'기타·자본', en:'Other', val:other, color:'#64748b',
       desc:'연준 자본금, 기타 예금 등 나머지 부채.' },
   ].filter(x => x.val != null && x.val > 0);
 
@@ -3417,48 +3422,54 @@ function renderFedBalanceSheet(series) {
     `<div title="${it.label} ${T(it.val)}" style="width:${pct(it.val).toFixed(2)}%;background:${it.color}" class="h-full"></div>`
   ).join('');
 
+  // 한 변(자산 or 부채) 카드 세트
+  const sideCards = (items) => items.map(it => `
+    <div class="bg-[#0f1522] rounded-lg p-2.5 border-l-2" style="border-color:${it.color}">
+      <div class="flex items-baseline justify-between">
+        <span class="text-[12px] font-bold text-gray-200">${it.label} <span class="text-[9px] text-gray-500">${it.en}</span></span>
+        <span class="text-[12px] font-bold" style="color:${it.color}">${T(it.val)} <span class="text-[9px] text-gray-500">${pct(it.val).toFixed(0)}%</span></span>
+      </div>
+      <p class="text-[10px] text-gray-400 mt-1 leading-snug">${it.desc}</p>
+    </div>`).join('');
+
   return `
   <div class="card p-4 mb-4">
     <div class="flex items-center justify-between mb-1">
       <h2 class="text-sm font-bold text-white">🏦 연준(Fed) 대차대조표 <span class="text-cyan-400">${T(M.total)}</span></h2>
       <span class="text-[10px] text-gray-500">기준일 ${asOf} · 출처 FRED</span>
     </div>
-    <p class="text-[11px] text-gray-400 mb-3">연준이 가진 것(<b class="text-cyan-300">자산</b>) = 연준이 갚을 것(<b class="text-pink-300">부채</b>). 양쪽 합계는 항상 같습니다.</p>
+    <p class="text-[11px] text-gray-400 mb-3"><b class="text-cyan-300">자산</b>(연준이 보유한 것) = <b class="text-pink-300">부채</b>(연준이 갚을 것). 양쪽 합계는 항상 같습니다 (회계 항등식).</p>
 
-    <!-- 좌(자산) / 우(부채) 막대 -->
-    <div class="grid grid-cols-2 gap-3 mb-3">
-      <div>
-        <div class="flex justify-between text-[11px] mb-1"><span class="text-cyan-300 font-bold">자산 (보유)</span><span class="text-gray-400">${T(M.total)}</span></div>
-        <div class="flex h-7 rounded overflow-hidden border border-gray-700">
-          <div title="국채+MBS" style="width:100%;background:#0891b2" class="h-full"></div>
+    <!-- 좌(자산) / 우(부채) 2단 구성 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <!-- ◀ 자산 -->
+      <div class="rounded-lg p-3" style="background:rgba(8,145,178,0.06);border:1px solid rgba(8,145,178,0.25)">
+        <div class="flex justify-between items-baseline mb-2">
+          <span class="text-[13px] text-cyan-300 font-bold">◀ 자산 (보유)</span>
+          <span class="text-[12px] text-gray-300 font-bold">${T(M.total)}</span>
         </div>
-        <div class="text-[10px] text-gray-400 mt-1">대부분 <b class="text-cyan-300">미국 국채 + MBS</b> (QE로 사들인 채권)</div>
+        <div class="flex h-7 rounded overflow-hidden border border-gray-700 mb-2">${barSeg(assets)}</div>
+        <div class="space-y-2">${sideCards(assets)}</div>
       </div>
-      <div>
-        <div class="flex justify-between text-[11px] mb-1"><span class="text-pink-300 font-bold">부채 (갚을 돈)</span><span class="text-gray-400">${T(M.total)}</span></div>
-        <div class="flex h-7 rounded overflow-hidden border border-gray-700">
-          ${barSeg(liab)}
+
+      <!-- ▶ 부채 -->
+      <div class="rounded-lg p-3" style="background:rgba(236,72,153,0.06);border:1px solid rgba(236,72,153,0.25)">
+        <div class="flex justify-between items-baseline mb-2">
+          <span class="text-[13px] text-pink-300 font-bold">부채 (갚을 돈) ▶</span>
+          <span class="text-[12px] text-gray-300 font-bold">${T(M.total)}</span>
         </div>
-        <div class="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+        <div class="flex h-7 rounded overflow-hidden border border-gray-700 mb-1">${barSeg(liab)}</div>
+        <div class="flex flex-wrap gap-x-3 gap-y-0.5 mb-2">
           ${liab.map(it => `<span class="text-[10px]" style="color:${it.color}">● ${it.label} ${pct(it.val).toFixed(0)}%</span>`).join('')}
         </div>
+        <div class="space-y-2">${sideCards(liab)}</div>
       </div>
-    </div>
 
-    <!-- 계정과목 설명 -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
-      ${liab.map(it => `
-        <div class="bg-[#0f1522] rounded-lg p-2.5 border-l-2" style="border-color:${it.color}">
-          <div class="flex items-baseline justify-between">
-            <span class="text-[12px] font-bold text-gray-200">${it.label} <span class="text-[9px] text-gray-500">${it.en}</span></span>
-            <span class="text-[12px] font-bold" style="color:${it.color}">${T(it.val)}</span>
-          </div>
-          <p class="text-[10px] text-gray-400 mt-1 leading-snug">${it.desc}</p>
-        </div>`).join('')}
     </div>
 
     <p class="text-[10px] text-gray-500 mt-3 leading-snug">
-      💡 <b>순유동성(Net Liquidity)</b> ≈ 연준 총자산 − TGA − 역레포(RRP). 준비금이 늘고 TGA·RRP가 줄면 시중 유동성이 풍부해져 위험자산에 우호적입니다.
+      💡 <b>순유동성(Net Liquidity)</b> ≈ 연준 총자산 − 재무부계정(TGA) − 역레포(RRP). 준비금이 늘고 TGA·RRP가 줄면 시중 유동성이 풍부해져 위험자산에 우호적입니다.
     </p>
   </div>`;
 }
