@@ -3642,6 +3642,8 @@ function renderLiquidity(data) {
   const chartConfigs = [
     { id: 'liqReservesChart', title: 'Bank Reserves (WRESBAL) - 은행 지급준비금', keys: ['reserves'], spxOverlay: true, height: 320, desc: '시중은행이 Fed에 예치한 잔액', canLog: true },
     { id: 'liqRatesChart', title: 'Fed 정책금리 (FEDFUNDS, IORB, ON RRP Rate)', keys: ['fedfunds', 'iorb', 'rrprate'], spxOverlay: true, height: 280, desc: 'Fed Funds (정책), IORB (지급준비금 이자), ON RRP Rate (MMF용) + S&P 500 오버레이 | 단위: %', canLog: false },
+    { id: 'liqYieldsChart', title: '국채금리 & 정책금리 (10Y · 2Y · Fed)', keys: ['dgs10', 'dgs2', 'fedfunds'], spxOverlay: false, height: 300, desc: '10년물·2년물 국채금리 + Fed 기준금리. 2Y가 10Y보다 높으면(역전) 경기침체 신호 | 단위: %', canLog: false },
+    { id: 'liqRealInflChart', title: '실질금리 & 기대인플레 (10Y)', keys: ['real10y', 'bei10y', 'dgs10'], spxOverlay: false, height: 300, desc: '10Y 명목금리 = 실질금리(TIPS) + 기대인플레(BEI). 실질금리 ↑=긴축적·자산에 부담, 기대인플레 ↑=물가전망 상승 | 단위: %', canLog: false },
     { id: 'liqFedbsChart', title: 'Fed Balance Sheet (WALCL)', keys: ['fedbs'], spxOverlay: true, height: 280, desc: 'Fed 총자산', canLog: true },
     { id: 'liqCompositionChart', title: 'Fed 부채 구성 (Stacked)', keys: [], spxOverlay: false, height: 360, desc: '부채 합계: Reserves + RRP + TGA + Currency + 기타 (= WALCL)', canLog: false, customType: 'stacked' },
     { id: 'liqCurrencyChart', title: '유통 현금 & 기타 부채 (WCURCIR)', keys: [], spxOverlay: false, height: 260, desc: '유통현금 (WCURCIR) 및 기타 = WALCL - Reserves - RRP - TGA - Currency | 단위: $T', canLog: false, customType: 'currencyOther' },
@@ -4303,6 +4305,8 @@ const _liqChartConfigs = {
   liqReservesChart: { keys: ['reserves'], spxOverlay: true, colors: ['#f472b6'], labels: ['Reserves'], fmt: v => (v/1e6).toFixed(2) + 'T', suffix: '$T' },
   liqM2Chart: { keys: ['m2'], spxOverlay: false, colors: ['#34d399'], labels: ['M2'], fmt: v => (v/1e3).toFixed(2) + 'T', suffix: '$T' },
   liqRatesChart: { keys: ['fedfunds','iorb','rrprate'], spxOverlay: true, colors: ['#fbbf24','#60a5fa','#fb923c'], labels: ['Fed Funds','IORB','ON RRP'], unifiedUnit: '%', fmt: v => v.toFixed(2) + '%' },
+  liqYieldsChart: { keys: ['dgs10','dgs2','fedfunds'], spxOverlay: false, colors: ['#22d3ee','#a78bfa','#fbbf24'], labels: ['10Y','2Y','Fed금리'], unifiedUnit: '%', fmt: v => v.toFixed(2) + '%' },
+  liqRealInflChart: { keys: ['real10y','bei10y','dgs10'], spxOverlay: false, colors: ['#34d399','#f87171','#94a3b8'], labels: ['10Y 실질금리','기대인플레','10Y 명목'], unifiedUnit: '%', fmt: v => v.toFixed(2) + '%' },
   liqSpreadChart: { keys: ['hyspread','t10y2y','stlfsi'], spxOverlay: false, colors: ['#f87171','#fbbf24','#a78bfa'], labels: ['HY Spread','10Y-2Y','Stress'], fmts: [v=>v.toFixed(2)+'%', v=>v.toFixed(2)+'%', v=>v.toFixed(2)] },
   liqDxyChart: { keys: ['dxy'], spxOverlay: true, colors: ['#94a3b8'], labels: ['Dollar Index'], fmt: v => v.toFixed(1) },
   liqMmfChart: { keys: ['mmf_retail'], spxOverlay: true, colors: ['#6ee7b7'], labels: ['MMF 소매'], fmt: v => (v/1000).toFixed(2) + 'T', suffix: '$T' },
@@ -5069,7 +5073,7 @@ window.drawMoneyMultChart = drawMoneyMultChart;
 
 //  ???  ???
 function syncLiqPeriod(period) {
-  const chartIds = ['liqReservesChart', 'liqRatesChart', 'liqFedbsChart', 'liqCompositionChart', 'liqCurrencyChart', 'liqRrpChart', 'liqTgaChart', 'liqM2Chart', 'liqMoneyMultChart', 'liqMmfChart'];
+  const chartIds = ['liqReservesChart', 'liqRatesChart', 'liqYieldsChart', 'liqRealInflChart', 'liqFedbsChart', 'liqCompositionChart', 'liqCurrencyChart', 'liqRrpChart', 'liqTgaChart', 'liqM2Chart', 'liqMoneyMultChart', 'liqMmfChart'];
   chartIds.forEach(id => {
     if (document.getElementById(id)) drawLiqChart(id, period);
   });
@@ -7540,6 +7544,7 @@ window.addEventListener('resize', () => {
       if (currentTab === 'liquidity' && typeof drawLiqChart === 'function' && _liqData) {
         const configs = [
           { id: 'liqReservesChart' }, { id: 'liqRatesChart' }, { id: 'liqFedbsChart' },
+          { id: 'liqYieldsChart' }, { id: 'liqRealInflChart' },
           { id: 'liqCompositionChart' }, { id: 'liqCurrencyChart' }, { id: 'liqRrpChart' }, { id: 'liqTgaChart' }, { id: 'liqM2Chart' }, { id: 'liqMoneyMultChart' }, { id: 'liqMmfChart' },
         ];
         configs.forEach(c => {

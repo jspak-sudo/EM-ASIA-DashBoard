@@ -59,6 +59,8 @@ const SERIES: Record<string, { id: string; name: string; unit: string; freq: str
   // Rates
   dgs10: { id: 'DGS10', name: '10Y Treasury Yield', unit: '%', freq: 'Daily', category: 'rates', description: '미국 10년물 국채 금리' },
   dgs2: { id: 'DGS2', name: '2Y Treasury Yield', unit: '%', freq: 'Daily', category: 'rates', description: '미국 2년물 국채 금리' },
+  real10y: { id: 'DFII10', name: '10Y Real Yield (TIPS)', unit: '%', freq: 'Daily', category: 'rates', description: '10년 실질금리 (TIPS) — 명목금리 − 기대인플레' },
+  bei10y: { id: 'T10YIE', name: '10Y Breakeven Inflation', unit: '%', freq: 'Daily', category: 'rates', description: '10년 기대인플레이션 (BEI) — 시장이 본 향후 10년 평균 물가' },
 
   // Global
   dxy: { id: 'DTWEXBGS', name: 'Dollar Index (Broad)', unit: 'Index', freq: 'Daily', category: 'global', description: '달러 광역 지수 — 강세=글로벌 유동성↓' },
