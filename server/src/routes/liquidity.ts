@@ -53,6 +53,7 @@ const SERIES: Record<string, { id: string; name: string; unit: string; freq: str
 
   // Global
   dxy: { id: 'DTWEXBGS', name: 'Dollar Index (Broad)', unit: 'Index', freq: 'Daily', category: 'global', description: '달러 광역 지수 — 강세=글로벌 유동성↓' },
+  usdkrw: { id: 'DEXKOUS', name: 'USD/KRW', unit: 'KRW', freq: 'Daily', category: 'global', description: '원/달러 환율 (FRED, 전일 종가 기준)' },
 
   // Currency in Circulation
   currency: { id: 'WCURCIR', name: 'Currency in Circulation', unit: 'Millions $', freq: 'Weekly', category: 'core', description: '유통 중 현금 — 대중이 보유한 지폐·동전, Fed 부채의 안정적 구성요소' },

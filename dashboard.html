@@ -3398,6 +3398,18 @@ function renderFedBalanceSheet(series) {
   const T = (x) => x == null ? '-' : '$' + (x/1e6).toFixed(2) + 'T';
   const pct = (x) => x == null ? 0 : (x / M.total * 100);
   const asOf = series.fedbs?.latest?.date || '';
+  // 원화 병기 (전일 환율, FRED DEXKOUS). x는 백만$ 단위
+  const fxRate = series.usdkrw?.latest?.value || null;
+  const fxDate = series.usdkrw?.latest?.date || '';
+  const W = (x) => {
+    if (x == null || fxRate == null) return '';
+    const krw = x * 1e6 * fxRate;          // 백만$ → 원
+    const jo = krw / 1e12;                  // 조원
+    if (jo >= 10000) return '₩' + (jo/10000).toFixed(2) + '경';
+    if (jo >= 1)     return '₩' + Math.round(jo).toLocaleString() + '조';
+    return '₩' + Math.round(krw/1e8).toLocaleString() + '억';
+  };
+  const Wsub = (x) => W(x) ? ` <span class="text-[9px] text-gray-500 font-normal">${W(x)}</span>` : '';
 
   // 자산 항목 (연준이 보유) — 분할 데이터가 없어 단일 합계로
   const assets = [
@@ -3427,7 +3439,7 @@ function renderFedBalanceSheet(series) {
     <div class="bg-[#0f1522] rounded-lg p-2.5 border-l-2" style="border-color:${it.color}">
       <div class="flex items-baseline justify-between">
         <span class="text-[12px] font-bold text-gray-200">${it.label} <span class="text-[9px] text-gray-500">${it.en}</span></span>
-        <span class="text-[12px] font-bold" style="color:${it.color}">${T(it.val)} <span class="text-[9px] text-gray-500">${pct(it.val).toFixed(0)}%</span></span>
+        <span class="text-[12px] font-bold" style="color:${it.color}">${T(it.val)}${Wsub(it.val)} <span class="text-[9px] text-gray-500">${pct(it.val).toFixed(0)}%</span></span>
       </div>
       <p class="text-[10px] text-gray-400 mt-1 leading-snug">${it.desc}</p>
     </div>`).join('');
@@ -3435,8 +3447,8 @@ function renderFedBalanceSheet(series) {
   return `
   <div class="card p-4 mb-4">
     <div class="flex items-center justify-between mb-1">
-      <h2 class="text-sm font-bold text-white">🏦 연준(Fed) 대차대조표 <span class="text-cyan-400">${T(M.total)}</span></h2>
-      <span class="text-[10px] text-gray-500">기준일 ${asOf} · 출처 FRED</span>
+      <h2 class="text-sm font-bold text-white">🏦 연준(Fed) 대차대조표 <span class="text-cyan-400">${T(M.total)}</span>${Wsub(M.total)}</h2>
+      <span class="text-[10px] text-gray-500">기준일 ${asOf} · 출처 FRED${fxRate ? ` · 환율 ₩${fxRate.toLocaleString()}/$ (${fxDate})` : ''}</span>
     </div>
     <p class="text-[11px] text-gray-400 mb-3"><b class="text-cyan-300">자산</b>(연준이 보유한 것) = <b class="text-pink-300">부채</b>(연준이 갚을 것). 양쪽 합계는 항상 같습니다 (회계 항등식).</p>
 
@@ -3447,7 +3459,7 @@ function renderFedBalanceSheet(series) {
       <div class="rounded-lg p-3" style="background:rgba(8,145,178,0.06);border:1px solid rgba(8,145,178,0.25)">
         <div class="flex justify-between items-baseline mb-2">
           <span class="text-[13px] text-cyan-300 font-bold">◀ 자산 (보유)</span>
-          <span class="text-[12px] text-gray-300 font-bold">${T(M.total)}</span>
+          <span class="text-[12px] text-gray-300 font-bold">${T(M.total)}${Wsub(M.total)}</span>
         </div>
         <div class="flex h-7 rounded overflow-hidden border border-gray-700 mb-2">${barSeg(assets)}</div>
         <div class="space-y-2">${sideCards(assets)}</div>
@@ -3457,7 +3469,7 @@ function renderFedBalanceSheet(series) {
       <div class="rounded-lg p-3" style="background:rgba(236,72,153,0.06);border:1px solid rgba(236,72,153,0.25)">
         <div class="flex justify-between items-baseline mb-2">
           <span class="text-[13px] text-pink-300 font-bold">부채 (갚을 돈) ▶</span>
-          <span class="text-[12px] text-gray-300 font-bold">${T(M.total)}</span>
+          <span class="text-[12px] text-gray-300 font-bold">${T(M.total)}${Wsub(M.total)}</span>
         </div>
         <div class="flex h-7 rounded overflow-hidden border border-gray-700 mb-1">${barSeg(liab)}</div>
         <div class="flex flex-wrap gap-x-3 gap-y-0.5 mb-2">
@@ -3495,15 +3507,23 @@ function renderLiquidity(data) {
   // ═══ 연준 대차대조표 도식 (자산 = 부채) ═══════════════════════════════════
   html += renderFedBalanceSheet(series);
 
+  const _fxRate = series.usdkrw?.latest?.value || null;  // 전일 원/달러
   html += '<div class="grid grid-cols-3 gap-3 mb-4">';
   summaryCards.forEach(c => {
     const latest = c.data ? c.data.latest : c.series?.latest;
     const val = latest ? c.fmt(latest.value) : '-';
     const date = latest ? latest.date : '-';
     const desc = c.data ? c.data.meta?.description : c.series?.meta?.description || '';
+    // 원화 병기 ($ 항목만 — M2·MMF는 Billions$ 단위, 금리는 제외)
+    let krwStr = '';
+    if (_fxRate && latest && (c.key === 'm2' || c.key === 'mmf_total')) {
+      const jo = (latest.value * 1e9 * _fxRate) / 1e12;   // Billions$ → 원 → 조원
+      krwStr = jo >= 10000 ? '₩' + (jo/10000).toFixed(2) + '경' : '₩' + Math.round(jo).toLocaleString() + '조';
+    }
     html += `<div class="card p-3 text-center">
       <p class="text-[10px] text-gray-500">${c.label}</p>
       <p class="text-xl font-bold ${c.color} mt-1">${val}</p>
+      ${krwStr ? `<p class="text-[10px] text-gray-400">${krwStr}</p>` : ''}
       <p class="text-[9px] text-gray-600 mt-1">${date}</p>
       <p class="text-[9px] text-gray-500">${desc}</p>
     </div>`;
