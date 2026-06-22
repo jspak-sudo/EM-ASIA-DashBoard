@@ -4757,7 +4757,7 @@ function drawCurrencyOtherChart(period) {
 
   //  ?: fedbsArr ?
   const allDates = fedbsArr.map(d => d.date).sort();
-  if (allDates.length < 2) { ctx.fillStyle = '#6b7280'; ctx.font = '12px sans-serif'; ctx.fillText('????', W/2-30, H/2); return; }
+  if (allDates.length < 2) { ctx.fillStyle = '#6b7280'; ctx.font = '12px sans-serif'; ctx.textAlign='center'; ctx.fillText('데이터 부족', W/2, H/2); return; }
 
   const mapRes  = buildFfwdMap(resArr,  allDates);
   const mapTga  = buildFfwdMap(tgaArr,  allDates);
@@ -4840,12 +4840,12 @@ function drawCurrencyOtherChart(period) {
   ctx.fillStyle = '#60a5fa';
   ctx.fillRect(pad.left, 9, 14, 3);
   ctx.fillStyle = '#e2e8f0';
-  ctx.fillText('?? (WCURCIR)  $' + latestCur.toFixed(3) + 'T', pad.left + 18, 17);
+  ctx.fillText('유통현금 (WCURCIR)  $' + latestCur.toFixed(3) + 'T', pad.left + 18, 17);
 
   ctx.fillStyle = '#d1d5db';
   ctx.fillRect(pad.left + 240, 9, 14, 3);
   ctx.fillStyle = '#d1d5db';
-  ctx.fillText('? ?? $' + latestOth.toFixed(3) + 'T', pad.left + 258, 17);
+  ctx.fillText('기타 부채  $' + latestOth.toFixed(3) + 'T', pad.left + 258, 17);
 
   // ?????
   ctx.textAlign = 'left'; ctx.font = 'bold 10px sans-serif';
@@ -5044,7 +5044,7 @@ window.drawMoneyMultChart = drawMoneyMultChart;
 
 //  ???  ???
 function syncLiqPeriod(period) {
-  const chartIds = ['liqReservesChart', 'liqRatesChart', 'liqFedbsChart', 'liqCompositionChart', 'liqCurrencyChart', 'liqRrpChart', 'liqTgaChart', 'liqM2Chart', 'liqMmfChart'];
+  const chartIds = ['liqReservesChart', 'liqRatesChart', 'liqFedbsChart', 'liqCompositionChart', 'liqCurrencyChart', 'liqRrpChart', 'liqTgaChart', 'liqM2Chart', 'liqMoneyMultChart', 'liqMmfChart'];
   chartIds.forEach(id => {
     if (document.getElementById(id)) drawLiqChart(id, period);
   });
@@ -7515,7 +7515,7 @@ window.addEventListener('resize', () => {
       if (currentTab === 'liquidity' && typeof drawLiqChart === 'function' && _liqData) {
         const configs = [
           { id: 'liqReservesChart' }, { id: 'liqRatesChart' }, { id: 'liqFedbsChart' },
-          { id: 'liqCompositionChart' }, { id: 'liqCurrencyChart' }, { id: 'liqRrpChart' }, { id: 'liqTgaChart' }, { id: 'liqM2Chart' },
+          { id: 'liqCompositionChart' }, { id: 'liqCurrencyChart' }, { id: 'liqRrpChart' }, { id: 'liqTgaChart' }, { id: 'liqM2Chart' }, { id: 'liqMoneyMultChart' }, { id: 'liqMmfChart' },
         ];
         configs.forEach(c => {
           const p = (window._liqPeriods && window._liqPeriods[c.id]) || '5Y';
