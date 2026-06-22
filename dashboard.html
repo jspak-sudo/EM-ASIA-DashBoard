@@ -3380,6 +3380,89 @@ function renderLiquidityError(msg) {
 }
 window.renderLiquidityError = renderLiquidityError;
 
+// ── 연준 대차대조표 T자형 도식 + 계정과목 설명 ──────────────────────────────
+function renderFedBalanceSheet(series) {
+  const v = (k) => series[k]?.latest?.value ?? null;   // 원단위(백만$ 또는 십억$)
+  // 단위 통일: 모두 백만$(M$) 기준으로 환산 → 표시는 조($T = ÷1e6)
+  const M = {
+    total:    v('fedbs'),                                  // WALCL, 백만$
+    reserves: v('reserves'),                               // WRESBAL, 백만$
+    currency: v('currency'),                               // WCURCIR, 백만$
+    tga:      v('tga'),                                    // WTREGEN, 백만$
+    rrp:      v('rrp') != null ? v('rrp') * 1000 : null,   // RRP 십억$ → 백만$
+  };
+  if (M.total == null) return '';  // 데이터 없으면 도식 생략
+
+  const known = (M.reserves||0) + (M.currency||0) + (M.tga||0) + (M.rrp||0);
+  const other = Math.max(0, M.total - known);              // 기타부채+자본
+  const T = (x) => x == null ? '-' : '$' + (x/1e6).toFixed(2) + 'T';
+  const pct = (x) => x == null ? 0 : (x / M.total * 100);
+  const asOf = series.fedbs?.latest?.date || '';
+
+  // 부채 항목 (큰 순서)
+  const liab = [
+    { key:'reserves', label:'지급준비금', en:'Bank Reserves', val:M.reserves, color:'#ec4899',
+      desc:'시중은행이 Fed에 맡긴 돈. <b>시장 유동성의 핵심</b> — 많을수록 은행이 굴릴 돈이 풍부(완화적). QT로 감소, QE로 증가.' },
+    { key:'currency', label:'유통 화폐', en:'Currency', val:M.currency, color:'#22c55e',
+      desc:'실물 지폐·동전. 경제규모 따라 완만히 증가하는 <b>구조적 항목</b>(유동성 분석에선 거의 고정).' },
+    { key:'tga', label:'재무부 계정', en:'TGA', val:M.tga, color:'#a78bfa',
+      desc:'미 재무부의 Fed 예금(정부 통장). <b>늘면 시중 돈을 빨아들이고</b>(긴축 효과), 줄면 시중에 푼다. 국채발행·세금에 따라 출렁.' },
+    { key:'rrp', label:'역레포', en:'Reverse Repo', val:M.rrp, color:'#f97316',
+      desc:'MMF 등이 하루짜리로 Fed에 맡긴 돈. <b>여유 유동성의 저수지</b> — 줄면 그 돈이 시중·준비금으로 이동(완화적).' },
+    { key:'other', label:'기타·자본', en:'Other', val:other, color:'#64748b',
+      desc:'연준 자본금, 기타 예금 등 나머지 부채.' },
+  ].filter(x => x.val != null && x.val > 0);
+
+  const barSeg = (items) => items.map(it =>
+    `<div title="${it.label} ${T(it.val)}" style="width:${pct(it.val).toFixed(2)}%;background:${it.color}" class="h-full"></div>`
+  ).join('');
+
+  return `
+  <div class="card p-4 mb-4">
+    <div class="flex items-center justify-between mb-1">
+      <h2 class="text-sm font-bold text-white">🏦 연준(Fed) 대차대조표 <span class="text-cyan-400">${T(M.total)}</span></h2>
+      <span class="text-[10px] text-gray-500">기준일 ${asOf} · 출처 FRED</span>
+    </div>
+    <p class="text-[11px] text-gray-400 mb-3">연준이 가진 것(<b class="text-cyan-300">자산</b>) = 연준이 갚을 것(<b class="text-pink-300">부채</b>). 양쪽 합계는 항상 같습니다.</p>
+
+    <!-- 좌(자산) / 우(부채) 막대 -->
+    <div class="grid grid-cols-2 gap-3 mb-3">
+      <div>
+        <div class="flex justify-between text-[11px] mb-1"><span class="text-cyan-300 font-bold">자산 (보유)</span><span class="text-gray-400">${T(M.total)}</span></div>
+        <div class="flex h-7 rounded overflow-hidden border border-gray-700">
+          <div title="국채+MBS" style="width:100%;background:#0891b2" class="h-full"></div>
+        </div>
+        <div class="text-[10px] text-gray-400 mt-1">대부분 <b class="text-cyan-300">미국 국채 + MBS</b> (QE로 사들인 채권)</div>
+      </div>
+      <div>
+        <div class="flex justify-between text-[11px] mb-1"><span class="text-pink-300 font-bold">부채 (갚을 돈)</span><span class="text-gray-400">${T(M.total)}</span></div>
+        <div class="flex h-7 rounded overflow-hidden border border-gray-700">
+          ${barSeg(liab)}
+        </div>
+        <div class="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+          ${liab.map(it => `<span class="text-[10px]" style="color:${it.color}">● ${it.label} ${pct(it.val).toFixed(0)}%</span>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- 계정과목 설명 -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+      ${liab.map(it => `
+        <div class="bg-[#0f1522] rounded-lg p-2.5 border-l-2" style="border-color:${it.color}">
+          <div class="flex items-baseline justify-between">
+            <span class="text-[12px] font-bold text-gray-200">${it.label} <span class="text-[9px] text-gray-500">${it.en}</span></span>
+            <span class="text-[12px] font-bold" style="color:${it.color}">${T(it.val)}</span>
+          </div>
+          <p class="text-[10px] text-gray-400 mt-1 leading-snug">${it.desc}</p>
+        </div>`).join('')}
+    </div>
+
+    <p class="text-[10px] text-gray-500 mt-3 leading-snug">
+      💡 <b>순유동성(Net Liquidity)</b> ≈ 연준 총자산 − TGA − 역레포(RRP). 준비금이 늘고 TGA·RRP가 줄면 시중 유동성이 풍부해져 위험자산에 우호적입니다.
+    </p>
+  </div>`;
+}
+
 function renderLiquidity(data) {
   _liqData = data;
   window._recessions = data.recessions || [];
@@ -3399,6 +3482,10 @@ function renderLiquidity(data) {
   ];
 
   let html = "";
+
+  // ═══ 연준 대차대조표 도식 (자산 = 부채) ═══════════════════════════════════
+  html += renderFedBalanceSheet(series);
+
   html += '<div class="grid grid-cols-3 gap-3 mb-4">';
   summaryCards.forEach(c => {
     const latest = c.data ? c.data.latest : c.series?.latest;
