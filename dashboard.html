@@ -3896,13 +3896,13 @@ function renderRates(data) {
 
   const rateCharts = [
     { id: 'liqYieldsChart', title: '국채금리 & 정책금리 (10Y · 2Y · Fed)', height: 320,
-      desc: '10년물·2년물 국채금리 + Fed 기준금리. 2Y가 10Y보다 높으면(장단기 역전) 경기침체 신호 | 단위: %' },
+      desc: 'DGS10(10Y) · DGS2(2Y) · FEDFUNDS(기준금리) | 단위: %' },
     { id: 'liqRealInflChart', title: '실질금리 & 기대인플레 (10Y)', height: 320,
-      desc: '10Y 명목금리 = 실질금리(TIPS) + 기대인플레(BEI). 실질금리 ↑=긴축적·자산에 부담, 기대인플레 ↑=물가전망 상승 | 단위: %' },
+      desc: 'DFII10(실질금리·TIPS) · T10YIE(기대인플레·BEI) · DGS10(명목) | 단위: %' },
     { id: 'liqGoldRealChart', title: '실질금리(역축) vs 금 가격 — TIPS 기반 (2003~)', height: 320, custom: 'goldReal',
-      desc: '10Y 실질금리(좌축, 상하 반전)와 금 가격(우축). 실질금리가 내려가면 금이 오르는 역상관 — 겹쳐 보이면 상관성이 높다는 뜻' },
+      desc: 'DFII10(10Y 실질금리·TIPS, 좌축 역축) · GC=F(금, 우축) | 좌 % · 우 $/oz' },
     { id: 'liqGoldLongChart', title: '장기: 실질금리(명목−CPI, 역축) vs 금 (1968~)', height: 340, custom: 'goldLong',
-      desc: '사후적 실질금리(10Y 명목금리 − CPI 전년비)와 금값(연평균 1968~1999 + 일간 2000~). 1971 금태환 정지·1970년대 스태그플레이션(실질금리 마이너스 → 금 폭등) 확인용' },
+      desc: '실질금리 = DGS10(10Y 국채금리) − CPIAUCSL(CPI 전년비) | 금 = London 연평균(1968~99) + GC=F 일간(2000~) | 좌 % · 우 $/oz(로그)' },
   ];
 
   // 현재값 요약 카드
