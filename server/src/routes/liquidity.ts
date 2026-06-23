@@ -184,6 +184,49 @@ async function getYahooSP500(): Promise<FredObservation[]> {
   }
 }
 
+// 금 선물(GC=F) — 실질금리 vs 금 비교용
+async function getYahooGold(): Promise<FredObservation[]> {
+  const cacheFile = join(CACHE_DIR, 'yahoo_gold.json');
+  try {
+    if (fs.existsSync(cacheFile)) {
+      const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+      const age = (Date.now() - new Date(cached.lastFetch).getTime()) / (1000 * 60 * 60);
+      if (age < 12 && cached.data?.length > 0) return cached.data;
+    }
+  } catch {}
+
+  try {
+    const p1 = Math.floor(new Date('2000-01-01').getTime() / 1000);
+    const p2 = Math.floor(Date.now() / 1000);
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/GC%3DF?interval=1d&period1=${p1}&period2=${p2}`;
+    const resp = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    if (!resp.ok) throw new Error(`Yahoo GC=F: ${resp.status}`);
+    const json = await resp.json();
+    const result = json.chart?.result?.[0];
+    if (!result) return [];
+    const timestamps: number[] = result.timestamp || [];
+    const closes: (number | null)[] = result.indicators?.quote?.[0]?.close || [];
+    const data: FredObservation[] = [];
+    for (let i = 0; i < timestamps.length; i++) {
+      const c = closes[i];
+      if (c != null && !isNaN(c)) {
+        data.push({ date: new Date(timestamps[i] * 1000).toISOString().split('T')[0], value: Math.round(c * 100) / 100 });
+      }
+    }
+    if (data.length > 0) {
+      try {
+        if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
+        fs.writeFileSync(cacheFile, JSON.stringify({ lastFetch: new Date().toISOString(), data }));
+      } catch {}
+    }
+    return data;
+  } catch (e: any) {
+    console.error('Yahoo gold fetch error:', e.message);
+    try { if (fs.existsSync(cacheFile)) return JSON.parse(fs.readFileSync(cacheFile, 'utf-8')).data || []; } catch {}
+    return [];
+  }
+}
+
 // Get series data (cache-first, refresh if stale)
 async function getSeriesData(key: string): Promise<FredObservation[]> {
   const series = SERIES[key];
@@ -279,9 +322,10 @@ router.get('/', async (_req: Request, res: Response) => {
 
     // Fetch all FRED series + Yahoo S&P 500 in parallel
     const keys = Object.keys(SERIES);
-    const [fredResults, sp500Data] = await Promise.all([
+    const [fredResults, sp500Data, goldData] = await Promise.all([
       Promise.allSettled(keys.map(k => getSeriesData(k))),
       getYahooSP500(),
+      getYahooGold(),
     ]);
 
     const seriesData: Record<string, { meta: any; data: FredObservation[]; latest?: { date: string; value: number } }> = {};
@@ -299,6 +343,13 @@ router.get('/', async (_req: Request, res: Response) => {
       meta: { id: '^GSPC', name: 'S&P 500', unit: 'Index', freq: 'Daily', category: 'reference', description: 'S&P 500 지수 (Yahoo Finance)' },
       data: sp500Data,
       latest: sp500Data.length > 0 ? sp500Data[sp500Data.length - 1] as { date: string; value: number } : undefined,
+    };
+
+    // 금 선물 GC=F (실질금리 비교용)
+    seriesData.gold = {
+      meta: { id: 'GC=F', name: 'Gold (금)', unit: 'USD/oz', freq: 'Daily', category: 'reference', description: '금 선물 가격 (Yahoo Finance GC=F)' },
+      data: goldData,
+      latest: goldData.length > 0 ? goldData[goldData.length - 1] as { date: string; value: number } : undefined,
     };
 
     // Compute Net Liquidity
