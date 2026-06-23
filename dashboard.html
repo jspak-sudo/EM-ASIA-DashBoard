@@ -3899,8 +3899,10 @@ function renderRates(data) {
       desc: '10년물·2년물 국채금리 + Fed 기준금리. 2Y가 10Y보다 높으면(장단기 역전) 경기침체 신호 | 단위: %' },
     { id: 'liqRealInflChart', title: '실질금리 & 기대인플레 (10Y)', height: 320,
       desc: '10Y 명목금리 = 실질금리(TIPS) + 기대인플레(BEI). 실질금리 ↑=긴축적·자산에 부담, 기대인플레 ↑=물가전망 상승 | 단위: %' },
-    { id: 'liqGoldRealChart', title: '실질금리(역축) vs 금 가격', height: 320, custom: 'goldReal',
+    { id: 'liqGoldRealChart', title: '실질금리(역축) vs 금 가격 — TIPS 기반 (2003~)', height: 320, custom: 'goldReal',
       desc: '10Y 실질금리(좌축, 상하 반전)와 금 가격(우축). 실질금리가 내려가면 금이 오르는 역상관 — 겹쳐 보이면 상관성이 높다는 뜻' },
+    { id: 'liqGoldLongChart', title: '장기: 실질금리(명목−CPI, 역축) vs 금 (1968~)', height: 340, custom: 'goldLong',
+      desc: '사후적 실질금리(10Y 명목금리 − CPI 전년비)와 금값(연평균 1968~1999 + 일간 2000~). 1971 금태환 정지·1970년대 스태그플레이션(실질금리 마이너스 → 금 폭등) 확인용' },
   ];
 
   // 현재값 요약 카드
@@ -3934,14 +3936,14 @@ function renderRates(data) {
           <p class="text-xs text-gray-300">${cfg.desc}</p>
         </div>
         <div class="flex gap-1 items-center">
-          ${periods.map(p => {
+          ${cfg.custom === 'goldLong' ? '<span class="text-[10px] text-gray-500">전체 기간 (1968~)</span>' : periods.map(p => {
             const q = '&quot;';
             return '<button onclick="syncLiqPeriod('+q+p+q+')" class="liq-period-btn-'+cfg.id+' liq-period-sync-'+p+' px-2 py-0.5 text-xs rounded '+(p==='5Y'?'bg-blue-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600')+'">'+p+'</button>';
           }).join('')}
         </div>
       </div>
       <canvas id="${cfg.id}" height="${cfg.height}"></canvas>
-      <p class="text-xs text-gray-300 mt-2 text-right">Source: <a href="https://fred.stlouisfed.org/" target="_blank" class="text-blue-400 hover:underline">FRED</a></p>
+      <p class="text-xs text-gray-300 mt-2 text-right">Source: ${cfg.custom === 'goldLong' ? '<a href="https://fred.stlouisfed.org/" target="_blank" class="text-blue-400 hover:underline">FRED</a> (DGS10·CPI) + 금 연평균(1968~99) · Yahoo(2000~)' : '<a href="https://fred.stlouisfed.org/" target="_blank" class="text-blue-400 hover:underline">FRED</a>'}</p>
     </div>`;
   });
 
@@ -5275,6 +5277,149 @@ function drawGoldRealChart(period) {
 }
 window.drawGoldRealChart = drawGoldRealChart;
 
+// 과거 금값 연평균 (London PM fix, USD/oz) 1968~1999 — 공개 역사 데이터
+const _goldAnnual = {
+  1968:39,1969:41,1970:36,1971:41,1972:58,1973:97,1974:159,1975:161,1976:125,
+  1977:148,1978:193,1979:306,1980:615,1981:460,1982:376,1983:424,1984:361,
+  1985:317,1986:368,1987:447,1988:437,1989:381,1990:384,1991:362,1992:344,
+  1993:360,1994:384,1995:384,1996:388,1997:331,1998:294,1999:279
+};
+
+// 장기 실질금리(명목 10Y − CPI 전년비, 역축) vs 금 (1968~)
+function drawGoldLongChart(period) {
+  if (!_liqData) return;
+  const canvas = document.getElementById('liqGoldLongChart');
+  if (!canvas) return;
+  const container = canvas.parentElement;
+  const rect = container.getBoundingClientRect();
+  canvas.width = rect.width; canvas.height = 340;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = { top: 30, right: 64, bottom: 36, left: 48 };
+
+  // ── 금값: 과거 연평균(1968~1999) + Yahoo 일간(2000~) 접합, 월말 기준으로 통일 ──
+  const goldMonthly = new Map();   // 'YYYY-MM' → price
+  for (const [y, v] of Object.entries(_goldAnnual)) {
+    for (let m = 1; m <= 12; m++) goldMonthly.set(y + '-' + String(m).padStart(2,'0'), v);
+  }
+  (_liqData.series.gold?.data || []).forEach(d => {
+    goldMonthly.set(d.date.slice(0,7), d.value);   // 같은 달이면 마지막값(월말)로 덮어씀
+  });
+
+  // ── CPI 전년비(YoY) 월별 맵 ──
+  const cpiArr = _liqData.series.cpi?.data || [];
+  const cpiMap = new Map(cpiArr.map(d => [d.date.slice(0,7), d.value]));
+  const cpiYoY = new Map();
+  cpiArr.forEach(d => {
+    const ym = d.date.slice(0,7);
+    const [y,m] = ym.split('-');
+    const prev = cpiMap.get((+y-1) + '-' + m);
+    if (prev) cpiYoY.set(ym, (d.value/prev - 1) * 100);
+  });
+
+  // ── 명목 10Y 월별(해당 월 마지막 관측) ──
+  const nomMap = new Map();
+  (_liqData.series.dgs10?.data || []).forEach(d => { if (d.value != null) nomMap.set(d.date.slice(0,7), d.value); });
+
+  // ── 1968-01 ~ 현재 월별 포인트 구성 ──
+  const points = [];
+  const start = new Date('1968-01-01'), end = new Date();
+  for (let dt = new Date(start); dt <= end; dt.setMonth(dt.getMonth()+1)) {
+    const ym = dt.toISOString().slice(0,7);
+    const gold = goldMonthly.get(ym);
+    const nom = nomMap.get(ym);
+    const inf = cpiYoY.get(ym);
+    if (gold == null || nom == null || inf == null) continue;
+    points.push({ date: ym, gold, real: nom - inf });
+  }
+  if (points.length < 2) {
+    ctx.fillStyle = '#1a1d27'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#6b7280'; ctx.font = '12px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('데이터 부족', W/2, H/2); return;
+  }
+
+  const golds = points.map(p=>p.gold), reals = points.map(p=>p.real);
+  const gMin = Math.min(...golds)*0.9, gMax = Math.max(...golds)*1.05;
+  const rMin = Math.min(...reals)-0.5, rMax = Math.max(...reals)+0.5;
+  const chH = H - pad.top - pad.bottom;
+  const xOf = i => pad.left + (i/(points.length-1))*(W-pad.left-pad.right);
+  // 금: 로그축(범위가 $36~$4000로 매우 큼)
+  const gLg = Math.log10(gMax/gMin) || 1;
+  const yGold = v => pad.top + (1 - Math.log10(Math.max(v,gMin)/gMin)/gLg)*chH;
+  const yReal = v => pad.top + ((v - rMin)/(rMax - rMin))*chH;  // 역축
+
+  ctx.fillStyle = '#1a1d27'; ctx.fillRect(0,0,W,H);
+  const firstMs = new Date(points[0].date+'-01').getTime(), lastMs = new Date(points[points.length-1].date+'-01').getTime();
+  const dateToX = d => pad.left + ((new Date(d).getTime()-firstMs)/((lastMs-firstMs)||1))*(W-pad.left-pad.right);
+  try { drawRecessionShading(ctx, pad, chH, W-pad.left-pad.right, firstMs, lastMs, dateToX); } catch {}
+
+  // 실질금리 0% 기준선 (역축)
+  if (rMin < 0 && rMax > 0) {
+    const y0 = yReal(0);
+    ctx.strokeStyle = 'rgba(248,113,113,0.4)'; ctx.lineWidth = 1; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(pad.left, y0); ctx.lineTo(W-pad.right, y0); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(248,113,113,0.7)'; ctx.font='9px sans-serif'; ctx.textAlign='left';
+    ctx.fillText('실질금리 0%', pad.left+2, y0-2);
+  }
+
+  // 좌축(실질금리 역축) 라벨
+  ctx.strokeStyle = '#2a2d3a'; ctx.lineWidth = 0.5; const yT=5;
+  for (let i=0;i<=yT;i++){ const v=rMin+(rMax-rMin)*(i/yT); const y=yReal(v);
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(W-pad.right,y); ctx.stroke();
+    ctx.fillStyle='#34d399'; ctx.font='10px sans-serif'; ctx.textAlign='right'; ctx.fillText(v.toFixed(0)+'%', pad.left-4, y+3); }
+  // 우축(금, 로그) 라벨
+  ctx.textAlign='left';
+  for (let i=0;i<=yT;i++){ const v=gMin*Math.pow(gMax/gMin,i/yT);
+    ctx.fillStyle='#fbbf24'; ctx.font='10px sans-serif'; ctx.fillText('$'+Math.round(v).toLocaleString(), W-pad.right+4, yGold(v)+3); }
+  // X축
+  ctx.fillStyle='#9ca3af'; ctx.font='10px sans-serif'; ctx.textAlign='center';
+  for (let i=0;i<=8;i++){ const idx=Math.round(i/8*(points.length-1)); ctx.fillText(points[idx].date.slice(0,4), xOf(idx), H-6); }
+
+  // 금 선 (우축 로그, 노랑)
+  ctx.beginPath(); ctx.strokeStyle='#fbbf24'; ctx.lineWidth=2;
+  points.forEach((p,i)=>{const x=xOf(i),y=yGold(p.gold); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}); ctx.stroke();
+  // 실질금리 선 (좌축 역축, 초록)
+  ctx.beginPath(); ctx.strokeStyle='#34d399'; ctx.lineWidth=2;
+  points.forEach((p,i)=>{const x=xOf(i),y=yReal(p.real); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}); ctx.stroke();
+
+  // 1971 금태환 정지 표시
+  const idx71 = points.findIndex(p => p.date >= '1971-08');
+  if (idx71 > 0) {
+    const x = xOf(idx71);
+    ctx.strokeStyle='rgba(148,163,184,0.6)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, H-pad.bottom); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#cbd5e1'; ctx.font='9px sans-serif'; ctx.textAlign='left';
+    ctx.fillText('1971 금태환 정지', x+3, pad.top+10);
+  }
+
+  // 범례
+  const last = points[points.length-1];
+  ctx.textAlign='left'; ctx.font='bold 11px sans-serif';
+  ctx.fillStyle='#34d399'; ctx.fillRect(pad.left,10,14,3);
+  ctx.fillStyle='#e2e8f0'; ctx.fillText('실질금리(명목−CPI) '+last.real.toFixed(1)+'% (역축)', pad.left+18,18);
+  ctx.fillStyle='#fbbf24'; ctx.fillRect(pad.left+250,10,14,3);
+  ctx.fillStyle='#e2e8f0'; ctx.fillText('금 $'+Math.round(last.gold).toLocaleString()+' (로그)', pad.left+268,18);
+
+  // 툴팁
+  let tip = document.getElementById('liqGoldLongTooltip');
+  if (!tip){ tip=document.createElement('div'); tip.id='liqGoldLongTooltip'; tip.className='fixed bg-gray-900/95 border border-gray-600 text-[11px] text-white px-3 py-2 rounded pointer-events-none z-50 hidden leading-relaxed'; document.body.appendChild(tip); }
+  if (canvas._glMove) canvas.removeEventListener('mousemove', canvas._glMove);
+  if (canvas._glLeave) canvas.removeEventListener('mouseleave', canvas._glLeave);
+  canvas._glMove = ev => {
+    const br=canvas.getBoundingClientRect(); const mx=(ev.clientX-br.left)*(W/br.width);
+    const idx=Math.max(0,Math.min(points.length-1,Math.round((mx-pad.left)/(W-pad.left-pad.right)*(points.length-1))));
+    const p=points[idx];
+    tip.innerHTML='<b>'+p.date+'</b><br><span style="color:#34d399">실질금리:</span> '+p.real.toFixed(1)+'%<br><span style="color:#fbbf24">금:</span> $'+Math.round(p.gold).toLocaleString();
+    tip.classList.remove('hidden');
+    tip.style.left=(ev.clientX+15+200>window.innerWidth?ev.clientX-215:ev.clientX+15)+'px';
+    tip.style.top=Math.max(5,ev.clientY-50)+'px';
+  };
+  canvas._glLeave = () => tip.classList.add('hidden');
+  canvas.addEventListener('mousemove', canvas._glMove);
+  canvas.addEventListener('mouseleave', canvas._glLeave);
+}
+window.drawGoldLongChart = drawGoldLongChart;
+
 //  ???  ???
 function syncLiqPeriod(period) {
   const chartIds = ['liqReservesChart', 'liqRatesChart', 'liqFedbsChart', 'liqCompositionChart', 'liqCurrencyChart', 'liqRrpChart', 'liqTgaChart', 'liqM2Chart', 'liqMoneyMultChart', 'liqMmfChart',
@@ -5852,6 +5997,11 @@ function drawLiqChart(chartId, period) {
   // 실질금리(역축) vs 금 (이중축)
   if (chartId === 'liqGoldRealChart') {
     drawGoldRealChart(period);
+    return;
+  }
+  // 장기 실질금리(명목−CPI) vs 금 (1968~)
+  if (chartId === 'liqGoldLongChart') {
+    drawGoldLongChart(period);
     return;
   }
   const cfg = _liqChartConfigs[chartId];
@@ -7753,7 +7903,7 @@ window.addEventListener('resize', () => {
   _resizeTimer = setTimeout(() => {
     try {
       if (currentTab === 'rates' && typeof drawLiqChart === 'function' && _liqData) {
-        ['liqYieldsChart','liqRealInflChart','liqGoldRealChart'].forEach(id => {
+        ['liqYieldsChart','liqRealInflChart','liqGoldRealChart','liqGoldLongChart'].forEach(id => {
           if (document.getElementById(id)) drawLiqChart(id, (window._liqPeriods && window._liqPeriods[id]) || '5Y');
         });
       } else if (currentTab === 'liquidity' && typeof drawLiqChart === 'function' && _liqData) {
