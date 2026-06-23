@@ -150,6 +150,7 @@
       <button onclick="switchTab('vix')" id="tab-vix" class="py-4 px-1 text-[13px] tab-inactive whitespace-nowrap">VIX 변동성</button>
       <button onclick="switchTab('funds')" id="tab-funds" class="py-4 px-1 text-[13px] tab-active whitespace-nowrap">ETF FINDER</button>
       <button onclick="switchTab('liquidity')" id="tab-liquidity" class="py-4 px-1 text-[13px] tab-inactive whitespace-nowrap">유동성분석</button>
+      <button onclick="switchTab('rates')" id="tab-rates" class="py-4 px-1 text-[13px] tab-inactive whitespace-nowrap">금리&인플레</button>
       <button onclick="switchTab('valuation')" id="tab-valuation" class="py-4 px-1 text-[13px] tab-inactive whitespace-nowrap">밸류에이션</button>
       <button onclick="switchTab('fed')" id="tab-fed" class="py-4 px-1 text-[13px] tab-inactive whitespace-nowrap">경제지표</button>
       <button onclick="switchTab('backtest')" id="tab-backtest" class="py-4 px-1 text-[13px] tab-inactive whitespace-nowrap">📊 백테스트</button>
@@ -2076,7 +2077,7 @@ function switchTab(tab) {
   currentTab = tab;
   try { localStorage.setItem('dashboardCurrentTab', tab); } catch {}
   // 존재하는 탭 버튼만 안전하게 업데이트
-  const tabIds = ['overview','stocks','feargreed','vix','funds','liquidity','valuation','fed','backtest'];
+  const tabIds = ['overview','stocks','feargreed','vix','funds','liquidity','rates','valuation','fed','backtest'];
   tabIds.forEach(id => {
     const el = document.getElementById('tab-' + id);
     if (el) el.className = 'py-4 px-1 text-[13px] whitespace-nowrap ' + (tab === id ? 'tab-active' : 'tab-inactive');
@@ -2165,6 +2166,17 @@ async function refresh() {
       }
       const liqData = await r.json();
       renderLiquidity(liqData);
+    } else if (currentTab === 'rates') {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('content').classList.remove('hidden');
+      const r = await fetch(API + '/liquidity', { signal: AbortSignal.timeout(60000) });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        renderLiquidityError(err.error || ('HTTP ' + r.status));
+        return;
+      }
+      const rtData = await r.json();
+      renderRates(rtData);
     } else if (currentTab === 'repression') {
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('content').classList.remove('hidden');
@@ -3642,8 +3654,6 @@ function renderLiquidity(data) {
   const chartConfigs = [
     { id: 'liqReservesChart', title: 'Bank Reserves (WRESBAL) - 은행 지급준비금', keys: ['reserves'], spxOverlay: true, height: 320, desc: '시중은행이 Fed에 예치한 잔액', canLog: true },
     { id: 'liqRatesChart', title: 'Fed 정책금리 (FEDFUNDS, IORB, ON RRP Rate)', keys: ['fedfunds', 'iorb', 'rrprate'], spxOverlay: true, height: 280, desc: 'Fed Funds (정책), IORB (지급준비금 이자), ON RRP Rate (MMF용) + S&P 500 오버레이 | 단위: %', canLog: false },
-    { id: 'liqYieldsChart', title: '국채금리 & 정책금리 (10Y · 2Y · Fed)', keys: ['dgs10', 'dgs2', 'fedfunds'], spxOverlay: false, height: 300, desc: '10년물·2년물 국채금리 + Fed 기준금리. 2Y가 10Y보다 높으면(역전) 경기침체 신호 | 단위: %', canLog: false },
-    { id: 'liqRealInflChart', title: '실질금리 & 기대인플레 (10Y)', keys: ['real10y', 'bei10y', 'dgs10'], spxOverlay: false, height: 300, desc: '10Y 명목금리 = 실질금리(TIPS) + 기대인플레(BEI). 실질금리 ↑=긴축적·자산에 부담, 기대인플레 ↑=물가전망 상승 | 단위: %', canLog: false },
     { id: 'liqFedbsChart', title: 'Fed Balance Sheet (WALCL)', keys: ['fedbs'], spxOverlay: true, height: 280, desc: 'Fed 총자산', canLog: true },
     { id: 'liqCompositionChart', title: 'Fed 부채 구성 (Stacked)', keys: [], spxOverlay: false, height: 360, desc: '부채 합계: Reserves + RRP + TGA + Currency + 기타 (= WALCL)', canLog: false, customType: 'stacked' },
     { id: 'liqCurrencyChart', title: '유통 현금 & 기타 부채 (WCURCIR)', keys: [], spxOverlay: false, height: 260, desc: '유통현금 (WCURCIR) 및 기타 = WALCL - Reserves - RRP - TGA - Currency | 단위: $T', canLog: false, customType: 'currencyOther' },
@@ -3875,6 +3885,79 @@ function renderLiquidity(data) {
     loadFedWatch();
   }, 100);
 }
+
+// ── 금리 & 인플레 탭 ────────────────────────────────────────────────────────
+function renderRates(data) {
+  _liqData = data;                       // drawLiqChart가 참조
+  window._recessions = data.recessions || [];
+  const series = data.series;
+  const el = document.getElementById('content');
+  const periods = ['1Y','3Y','5Y','10Y','ALL'];
+
+  const rateCharts = [
+    { id: 'liqYieldsChart', title: '국채금리 & 정책금리 (10Y · 2Y · Fed)', height: 320,
+      desc: '10년물·2년물 국채금리 + Fed 기준금리. 2Y가 10Y보다 높으면(장단기 역전) 경기침체 신호 | 단위: %' },
+    { id: 'liqRealInflChart', title: '실질금리 & 기대인플레 (10Y)', height: 320,
+      desc: '10Y 명목금리 = 실질금리(TIPS) + 기대인플레(BEI). 실질금리 ↑=긴축적·자산에 부담, 기대인플레 ↑=물가전망 상승 | 단위: %' },
+  ];
+
+  // 현재값 요약 카드
+  const v = k => series[k]?.latest?.value;
+  const card = (label, val, color, sub) => `<div class="card p-3 text-center">
+    <p class="text-[10px] text-gray-500">${label}</p>
+    <p class="text-xl font-bold ${color} mt-1">${val != null ? val.toFixed(2) + '%' : '-'}</p>
+    <p class="text-[9px] text-gray-500 mt-1">${sub || ''}</p></div>`;
+  const spread = (v('dgs10') != null && v('dgs2') != null) ? (v('dgs10') - v('dgs2')) : null;
+
+  let html = `<div class="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-4">
+    ${card('10Y 국채', v('dgs10'), 'text-cyan-400', '시장 장기금리')}
+    ${card('2Y 국채', v('dgs2'), 'text-purple-400', '시장 단기금리')}
+    ${card('Fed 기준금리', v('fedfunds'), 'text-yellow-400', '정책금리')}
+    ${card('10Y 실질금리', v('real10y'), 'text-green-400', 'TIPS')}
+    ${card('기대인플레', v('bei10y'), 'text-red-400', '10Y BEI')}
+    <div class="card p-3 text-center">
+      <p class="text-[10px] text-gray-500">10Y-2Y 차</p>
+      <p class="text-xl font-bold ${spread != null && spread < 0 ? 'text-red-400' : 'text-gray-200'} mt-1">${spread != null ? (spread>0?'+':'')+spread.toFixed(2)+'%p' : '-'}</p>
+      <p class="text-[9px] text-gray-500 mt-1">${spread != null && spread < 0 ? '⚠️ 역전(침체신호)' : '정상'}</p>
+    </div>
+  </div>`;
+
+  // 차트 카드 (유동성 탭과 동일 구조 — 기간버튼 공유)
+  if (!window._liqScaleModes) window._liqScaleModes = {};
+  rateCharts.forEach(cfg => {
+    html += `<div class="card p-3 mb-4">
+      <div class="flex items-center justify-between mb-2 sticky top-0 bg-[#1e2130] z-10 py-1">
+        <div>
+          <h3 class="text-sm font-semibold text-white">${cfg.title}</h3>
+          <p class="text-xs text-gray-300">${cfg.desc}</p>
+        </div>
+        <div class="flex gap-1 items-center">
+          ${periods.map(p => {
+            const q = '&quot;';
+            return '<button onclick="syncLiqPeriod('+q+p+q+')" class="liq-period-btn-'+cfg.id+' liq-period-sync-'+p+' px-2 py-0.5 text-xs rounded '+(p==='5Y'?'bg-blue-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600')+'">'+p+'</button>';
+          }).join('')}
+        </div>
+      </div>
+      <canvas id="${cfg.id}" height="${cfg.height}"></canvas>
+      <p class="text-xs text-gray-300 mt-2 text-right">Source: <a href="https://fred.stlouisfed.org/" target="_blank" class="text-blue-400 hover:underline">FRED</a></p>
+    </div>`;
+  });
+
+  // 해설
+  html += `<div class="card p-3 mb-4 text-xs text-gray-300 space-y-1.5">
+    <p class="font-semibold text-white text-sm mb-1">📘 금리·인플레 읽는 법</p>
+    <p>▪ <b class="text-cyan-300">명목금리(10Y) = 실질금리 + 기대인플레</b> (피셔 방정식)</p>
+    <p>▪ <b class="text-purple-300">장단기 역전(2Y>10Y)</b> → 역사적으로 강력한 경기침체 선행신호</p>
+    <p>▪ <b class="text-green-300">실질금리 ↑</b> → 돈의 실질 비용 상승 → 주식·금 등 위험자산에 부담</p>
+    <p>▪ <b class="text-red-300">기대인플레 ↑</b> → 시장이 물가 상승을 전망 → Fed 긴축 압력</p>
+  </div>`;
+
+  el.innerHTML = html;
+  window._liqPeriods = window._liqPeriods || {};
+  rateCharts.forEach(c => window._liqPeriods[c.id] = '5Y');
+  setTimeout(() => { rateCharts.forEach(cfg => drawLiqChart(cfg.id, '5Y')); }, 100);
+}
+window.renderRates = renderRates;
 
 
 // ???????????????????????????????????????
@@ -5073,7 +5156,9 @@ window.drawMoneyMultChart = drawMoneyMultChart;
 
 //  ???  ???
 function syncLiqPeriod(period) {
-  const chartIds = ['liqReservesChart', 'liqRatesChart', 'liqYieldsChart', 'liqRealInflChart', 'liqFedbsChart', 'liqCompositionChart', 'liqCurrencyChart', 'liqRrpChart', 'liqTgaChart', 'liqM2Chart', 'liqMoneyMultChart', 'liqMmfChart'];
+  const chartIds = ['liqReservesChart', 'liqRatesChart', 'liqFedbsChart', 'liqCompositionChart', 'liqCurrencyChart', 'liqRrpChart', 'liqTgaChart', 'liqM2Chart', 'liqMoneyMultChart', 'liqMmfChart',
+    // 금리&인플레 탭 차트 (같은 기간 동기화 공유)
+    'liqYieldsChart', 'liqRealInflChart'];
   chartIds.forEach(id => {
     if (document.getElementById(id)) drawLiqChart(id, period);
   });
@@ -7541,10 +7626,13 @@ window.addEventListener('resize', () => {
   clearTimeout(_resizeTimer);
   _resizeTimer = setTimeout(() => {
     try {
-      if (currentTab === 'liquidity' && typeof drawLiqChart === 'function' && _liqData) {
+      if (currentTab === 'rates' && typeof drawLiqChart === 'function' && _liqData) {
+        ['liqYieldsChart','liqRealInflChart'].forEach(id => {
+          if (document.getElementById(id)) drawLiqChart(id, (window._liqPeriods && window._liqPeriods[id]) || '5Y');
+        });
+      } else if (currentTab === 'liquidity' && typeof drawLiqChart === 'function' && _liqData) {
         const configs = [
           { id: 'liqReservesChart' }, { id: 'liqRatesChart' }, { id: 'liqFedbsChart' },
-          { id: 'liqYieldsChart' }, { id: 'liqRealInflChart' },
           { id: 'liqCompositionChart' }, { id: 'liqCurrencyChart' }, { id: 'liqRrpChart' }, { id: 'liqTgaChart' }, { id: 'liqM2Chart' }, { id: 'liqMoneyMultChart' }, { id: 'liqMmfChart' },
         ];
         configs.forEach(c => {
