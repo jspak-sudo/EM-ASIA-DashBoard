@@ -59,6 +59,7 @@ async function main() {
     ['/api/valuation',  'valuation'],
     ['/api/fed',        'fed'],
     ['/api/fedwatch',   'fedwatch'],
+    ['/api/soxvol',     'soxvol'],
   ];
   for (const [endpoint, label] of simpleEndpoints) {
     process.stdout.write(`  ${label}... `);

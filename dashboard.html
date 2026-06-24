@@ -148,6 +148,7 @@
       <button onclick="switchTab('stocks')" id="tab-stocks" class="py-4 px-1 text-[13px] tab-inactive whitespace-nowrap">주요종목</button>
       <button onclick="switchTab('feargreed')" id="tab-feargreed" class="py-4 px-1 text-[13px] tab-inactive whitespace-nowrap">공포/탐욕</button>
       <button onclick="switchTab('vix')" id="tab-vix" class="py-4 px-1 text-[13px] tab-inactive whitespace-nowrap">VIX 변동성</button>
+      <button onclick="switchTab('soxvol')" id="tab-soxvol" class="py-4 px-1 text-[13px] tab-inactive whitespace-nowrap">반도체 변동성</button>
       <button onclick="switchTab('funds')" id="tab-funds" class="py-4 px-1 text-[13px] tab-active whitespace-nowrap">ETF FINDER</button>
       <button onclick="switchTab('liquidity')" id="tab-liquidity" class="py-4 px-1 text-[13px] tab-inactive whitespace-nowrap">유동성분석</button>
       <button onclick="switchTab('rates')" id="tab-rates" class="py-4 px-1 text-[13px] tab-inactive whitespace-nowrap">금리&인플레</button>
@@ -2077,7 +2078,7 @@ function switchTab(tab) {
   currentTab = tab;
   try { localStorage.setItem('dashboardCurrentTab', tab); } catch {}
   // 존재하는 탭 버튼만 안전하게 업데이트
-  const tabIds = ['overview','stocks','feargreed','vix','funds','liquidity','rates','valuation','fed','backtest'];
+  const tabIds = ['overview','stocks','feargreed','vix','soxvol','funds','liquidity','rates','valuation','fed','backtest'];
   tabIds.forEach(id => {
     const el = document.getElementById('tab-' + id);
     if (el) el.className = 'py-4 px-1 text-[13px] whitespace-nowrap ' + (tab === id ? 'tab-active' : 'tab-inactive');
@@ -2166,6 +2167,12 @@ async function refresh() {
       }
       const liqData = await r.json();
       renderLiquidity(liqData);
+    } else if (currentTab === 'soxvol') {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('content').classList.remove('hidden');
+      const r = await fetch(API + '/soxvol', { signal: AbortSignal.timeout(60000) });
+      if (!r.ok) { document.getElementById('content').innerHTML = `<div class="card p-8 text-center text-red-400">반도체 변동성 로드 실패: HTTP ${r.status}</div>`; return; }
+      renderSoxVol(await r.json());
     } else if (currentTab === 'rates') {
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('content').classList.remove('hidden');
@@ -3962,6 +3969,114 @@ function renderRates(data) {
   setTimeout(() => { rateCharts.forEach(cfg => drawLiqChart(cfg.id, '5Y')); }, 100);
 }
 window.renderRates = renderRates;
+
+// ── 반도체 변동성 탭 ────────────────────────────────────────────────────────
+let _soxVolData = null;
+function renderSoxVol(data) {
+  _soxVolData = data;
+  const el = document.getElementById('content');
+  const lv = (x) => x?.latest ? x.latest.value : null;
+  const fmt = (v, suf='') => v != null ? v.toFixed(2) + suf : '-';
+
+  // 변동성 수준 라벨
+  const volLabel = (p) => p == null ? '' : p >= 80 ? '🔴 매우 높음' : p >= 60 ? '🟠 높음' : p >= 40 ? '🟡 보통' : p >= 20 ? '🟢 낮음' : '🔵 매우 낮음';
+  const card = (title, sub, val, suf, pct, color) => `<div class="card p-4">
+    <p class="text-[11px] text-gray-400">${title}</p>
+    <p class="text-[10px] text-gray-600 mb-1">${sub}</p>
+    <p class="text-3xl font-bold ${color}">${fmt(val, suf)}</p>
+    ${pct != null ? `<p class="text-[11px] text-gray-400 mt-1">과거 대비 <b>${pct}</b>퍼센타일 · ${volLabel(pct)}</p>` : ''}
+  </div>`;
+
+  let html = `<div class="card p-4 mb-4">
+    <h2 class="text-sm font-bold text-white">📡 반도체 섹터 변동성</h2>
+    <p class="text-[11px] text-gray-400 mt-1">반도체 전용 VIX는 없어, <b class="text-cyan-300">^VXN(나스닥100 옵션 변동성·반도체 비중 높음)</b>을 기대변동성 proxy로, <b class="text-amber-300">^SOX 30일 실현변동성</b>을 실제 변동성으로 봅니다.</p>
+    <p class="text-[10px] text-gray-600 mt-1">출처: Yahoo Finance (^VXN · ^SOX · ^VIX) · 기준 ${data.fetchedAt ? new Date(data.fetchedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul',hour12:false}) : ''}</p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+    ${card('① 기대변동성 (옵션 IV)', '^VXN · 나스닥100 변동성', lv(data.vxn), '', data.vxn?.percentile, 'text-cyan-400')}
+    ${card('② 실제변동성 (실현)', '^SOX 30일 실현변동성(연율%)', lv(data.soxRV), '%', data.soxRV?.percentile, 'text-amber-400')}
+    ${card('참고: 시장 전체', '^VIX · S&P500 변동성', lv(data.vix), '', data.vix?.percentile, 'text-gray-300')}
+  </div>
+
+  <div class="card p-3 mb-4">
+    <div class="flex items-center justify-between mb-2">
+      <h3 class="text-sm font-semibold text-white">변동성 추이 — 기대(^VXN) vs 실제(SOX 실현변동성)</h3>
+      <div class="flex gap-1" id="soxVolPeriodBtns">
+        ${['1Y','3Y','5Y','ALL'].map(p => `<button onclick="drawSoxVolChart('${p}')" id="soxvolp-${p}" class="px-2 py-0.5 text-xs rounded ${p==='3Y'?'bg-blue-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}">${p}</button>`).join('')}
+      </div>
+    </div>
+    <canvas id="soxVolChart" height="300"></canvas>
+    <p class="text-[10px] text-gray-500 mt-2">▪ 두 선이 벌어지면: 기대(^VXN) ＜ 실제 → 시장이 변동성을 과소평가 / 기대 ＞ 실제 → 과대 우려</p>
+  </div>
+
+  <div class="card p-3 mb-4 text-xs text-gray-300 space-y-1.5">
+    <p class="font-semibold text-white text-sm mb-1">📘 읽는 법</p>
+    <p>▪ <b class="text-cyan-300">^VXN</b> = 나스닥100 옵션의 향후 30일 기대변동성. 반도체 대형주(엔비디아·브로드컴·AMD) 비중이 높아 반도체 변동성 proxy로 활용</p>
+    <p>▪ <b class="text-amber-300">SOX 실현변동성</b> = 필라델피아 반도체 지수가 실제로 출렁인 정도(과거 30일)</p>
+    <p>▪ 반도체는 시장 전체(^VIX)보다 변동성이 <b>구조적으로 높음</b> → ^VXN·SOX RV가 ^VIX 위에 위치</p>
+  </div>`;
+
+  el.innerHTML = html;
+  window._soxVolPeriod = '3Y';
+  setTimeout(() => drawSoxVolChart('3Y'), 80);
+}
+window.renderSoxVol = renderSoxVol;
+
+function drawSoxVolChart(period) {
+  if (!_soxVolData) return;
+  window._soxVolPeriod = period;
+  ['1Y','3Y','5Y','ALL'].forEach(p => { const b=document.getElementById('soxvolp-'+p); if(b) b.className = 'px-2 py-0.5 text-xs rounded ' + (p===period?'bg-blue-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'); });
+
+  const canvas = document.getElementById('soxVolChart');
+  if (!canvas) return;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width; canvas.height = 300;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = { top: 28, right: 16, bottom: 30, left: 40 };
+
+  const cutoffMap = { '1Y':365, '3Y':1095, '5Y':1825, 'ALL':99999 };
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - (cutoffMap[period]||1095));
+  const cutoffStr = cutoff.toISOString().slice(0,10);
+
+  const lines = [
+    { key:'vxn',   data: (_soxVolData.vxn?.series||[]).filter(d=>d.date>=cutoffStr),   color:'#22d3ee', label:'^VXN 기대변동성' },
+    { key:'soxRV', data: (_soxVolData.soxRV?.series||[]).filter(d=>d.date>=cutoffStr), color:'#fbbf24', label:'SOX 실현변동성' },
+    { key:'vix',   data: (_soxVolData.vix?.series||[]).filter(d=>d.date>=cutoffStr),   color:'#94a3b8', label:'^VIX 참고' },
+  ].filter(l => l.data.length > 1);
+  if (!lines.length) return;
+
+  const allV = lines.flatMap(l => l.data.map(d=>d.value));
+  const vMin = Math.max(0, Math.min(...allV)*0.9), vMax = Math.max(...allV)*1.05;
+  const allDates = [...new Set(lines.flatMap(l=>l.data.map(d=>d.date)))].sort();
+  const firstMs = new Date(allDates[0]).getTime(), lastMs = new Date(allDates[allDates.length-1]).getTime();
+  const totalMs = lastMs - firstMs || 1;
+  const xOf = d => pad.left + ((new Date(d).getTime()-firstMs)/totalMs)*(W-pad.left-pad.right);
+  const yOf = v => pad.top + (1-(v-vMin)/(vMax-vMin))*(H-pad.top-pad.bottom);
+
+  ctx.fillStyle = '#1a1d27'; ctx.fillRect(0,0,W,H);
+  try { drawRecessionShading(ctx, pad, H-pad.top-pad.bottom, W-pad.left-pad.right, firstMs, lastMs, xOf); } catch {}
+  // 격자
+  ctx.strokeStyle = '#2a2d3a'; ctx.lineWidth = 0.5;
+  for (let i=0;i<=5;i++){ const v=vMin+(vMax-vMin)*(i/5); const y=yOf(v);
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(W-pad.right,y); ctx.stroke();
+    ctx.fillStyle='#9ca3af'; ctx.font='10px sans-serif'; ctx.textAlign='right'; ctx.fillText(v.toFixed(0), pad.left-4, y+3); }
+  // X
+  ctx.fillStyle='#9ca3af'; ctx.font='10px sans-serif'; ctx.textAlign='center';
+  for (let i=0;i<=6;i++){ const idx=Math.round(i/6*(allDates.length-1)); ctx.fillText(allDates[idx].slice(0,7), xOf(allDates[idx]), H-6); }
+  // 선
+  lines.forEach(l => {
+    ctx.beginPath(); ctx.strokeStyle=l.color; ctx.lineWidth = l.key==='vix'?1.2:2;
+    l.data.forEach((d,i)=>{ const x=xOf(d.date), y=yOf(d.value); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }); ctx.stroke();
+  });
+  // 범례
+  ctx.textAlign='left'; ctx.font='bold 11px sans-serif'; let lx = pad.left;
+  lines.forEach(l => { const last=l.data[l.data.length-1];
+    ctx.fillStyle=l.color; ctx.fillRect(lx,10,12,3);
+    ctx.fillStyle='#e2e8f0'; const t=l.label+' '+last.value.toFixed(1); ctx.fillText(t, lx+15, 18); lx += ctx.measureText(t).width + 38; });
+}
+window.drawSoxVolChart = drawSoxVolChart;
 
 
 // ???????????????????????????????????????
