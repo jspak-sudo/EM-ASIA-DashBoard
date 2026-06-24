@@ -4057,7 +4057,7 @@ function renderFedWatch(data) {
       <span class="flex items-center gap-1"><span style="display:inline-block;width:16px;height:3px;background:#a855f7;border-top:2px dashed #a855f7;background:transparent;"></span> Dot Plot 중앙값</span>
       <span class="flex items-center gap-1"><span style="display:inline-block;width:10px;height:10px;background:#fbbf24;border-radius:50%;"></span> 현재</span>
     </div>
-    <p class="text-[9px] text-gray-600 mt-1">: CME Fed Funds Futures(Yahoo Finance), FOMC Projection Materials (${dp?.source ?? '-'})</p>
+    <p class="text-[9px] text-gray-600 mt-1">출처: CME Fed Funds Futures(Yahoo Finance), FOMC Projection Materials (${dp?.source ?? '-'})</p>
   </div>`;
 
   // ?? FOMC ???
@@ -4375,11 +4375,11 @@ function drawDotPlotChart(dp) {
     ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + W2, y); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = colors[i] || '#fff'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('?? ' + rate.toFixed(2) + '%', PAD.left + 2, y - 3);
+    ctx.fillText('중앙값 ' + rate.toFixed(2) + '%', PAD.left + 2, y - 3);
   });
 
   ctx.fillStyle = '#9CA3AF'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
-  ctx.fillText('?????(?', PAD.left + W2 / 2, PAD.top + H2 + 30);
+  ctx.fillText('전망 연도 (FOMC 점도표)', PAD.left + W2 / 2, PAD.top + H2 + 30);
 }
 
 // Chart config mapping
@@ -7004,7 +7004,7 @@ function buildPeGauge(fwdPE, avg5, avg10) {
       <!-- 10Y avg marker -->
       <div style="position:absolute;top:-3px;left:${a10Pct}%;width:2px;height:18px;background:#f87171;transform:translateX(-50%)"></div>
       <!-- Current PE marker (triangle) -->
-      <div style="position:absolute;top:-6px;left:${fPct}%;transform:translateX(-50%);font-size:16px;line-height:1;color:#60a5fa">??/div>
+      <div style="position:absolute;top:-6px;left:${fPct}%;transform:translateX(-50%);font-size:16px;line-height:1;color:#60a5fa">▼</div>
     </div>
     <div class="flex justify-between text-[9px] text-gray-600 mt-1">
       <span>${minPE}x</span><span>Cheap</span><span>${maxPE}x</span>
@@ -7092,7 +7092,7 @@ function drawValLineChart(canvasId, tooltipId, data, series, opts) {
     ctx.fillStyle = '#6b7280';
     ctx.font = '13px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('???? (? ? ?', W / 2, H / 2);
+    ctx.fillText('데이터 없음', W / 2, H / 2);
     return;
   }
 
@@ -7222,7 +7222,7 @@ function drawValBarChart(canvasId, tooltipId, data, opts) {
 
   if (!data.length) {
     ctx.fillStyle = '#6b7280'; ctx.font = '13px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('???? (? ? ?', W / 2, H / 2);
+    ctx.fillText('데이터 없음', W / 2, H / 2);
     return;
   }
 
@@ -7332,7 +7332,7 @@ function startBackfillPolling() {
       if (d.status === 'done') {
         clearInterval(_backfillPollTimer);
         statusEl.classList.remove('hidden');
-        statusEl.innerHTML = `<span class="text-green-400">??? ? ? ??${p.found}????(${p.skipped}? )</span>`;
+        statusEl.innerHTML = `<span class="text-green-400">완료 — ${p.found}건 보강 (${p.skipped}건 생략)</span>`;
         if (badge) badge.innerHTML = '';
         // ?????: ???
         setTimeout(() => { if (currentTab === 'valuation') refresh(); }, 1500);
