@@ -1513,6 +1513,21 @@ function renderVix(data) {
       </div>
     </div>
 
+    <!-- VIX(기대) vs SPX 실현변동성(실제) 검증 -->
+    <div class="card p-3 mb-4">
+      <div class="flex items-center justify-between mb-2">
+        <div>
+          <h3 class="text-sm font-semibold text-white">VIX(기대) vs S&P500 실현변동성(실제)</h3>
+          <p class="text-[11px] text-gray-400">VIX = 옵션 기대변동성 · 실현변동성 = SPX 일수익률 30일 표준편차 ×√252 | 단위: %</p>
+        </div>
+        <div class="flex gap-1" id="vixRvPeriodBtns">
+          ${['1Y','3Y','5Y','ALL'].map(p => `<button onclick="drawVixRvChart('${p}')" id="vixrvp-${p}" class="px-2 py-0.5 text-xs rounded ${p==='3Y'?'bg-blue-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}">${p}</button>`).join('')}
+        </div>
+      </div>
+      <canvas id="vixRvChart" height="280"></canvas>
+      <p class="text-[10px] text-gray-500 mt-2">▪ 보통 <b class="text-cyan-300">VIX ＞ 실현변동성</b> (변동성 리스크 프리미엄) · 위기 땐 실현이 VIX를 추월하기도</p>
+    </div>
+
     <!-- 현재 위치 -->
     <div class="card p-3 mb-4">
       <h3 class="text-sm font-semibold text-white mb-2 sticky top-0 bg-[#1e2130] z-10 py-1">현재 위치</h3>
@@ -1604,7 +1619,7 @@ function renderVix(data) {
   computeVixEpisodes(_vixEpThreshold);
 
   //  ?
-  setTimeout(() => drawVixChart('1Y'), 100);
+  setTimeout(() => { drawVixChart('1Y'); drawVixRvChart('3Y'); }, 100);
 }
 
 function computeVixEpisodes(threshold) {
@@ -2072,6 +2087,74 @@ function drawVixChart(period) {
   canvas.addEventListener('mouseleave', canvas._vixChartLeave);
 }
 window.drawVixChart = drawVixChart;
+
+// VIX(기대) vs SPX 30일 실현변동성(실제) — 검증용
+function drawVixRvChart(period) {
+  if (!_vixFullHistory || !_vixSpxData) return;
+  window._vixRvPeriod = period;
+  ['1Y','3Y','5Y','ALL'].forEach(p => { const b=document.getElementById('vixrvp-'+p); if(b) b.className='px-2 py-0.5 text-xs rounded '+(p===period?'bg-blue-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'); });
+
+  const canvas = document.getElementById('vixRvChart');
+  if (!canvas) return;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width; canvas.height = 280;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = { top: 26, right: 16, bottom: 30, left: 38 };
+
+  // SPX 일별 종가 → 30일 실현변동성(연율%)
+  const spx = (_vixSpxData || []).filter(d => d.close != null);
+  const rv = [];
+  const rets = [];
+  for (let i = 1; i < spx.length; i++) rets.push(Math.log(spx[i].close / spx[i-1].close));
+  const win = 30;
+  for (let i = win; i < rets.length; i++) {
+    const s = rets.slice(i-win, i);
+    const m = s.reduce((a,b)=>a+b,0)/win;
+    const v = s.reduce((a,b)=>a+(b-m)**2,0)/win;
+    rv.push({ date: spx[i+1].date, value: Math.sqrt(v)*Math.sqrt(252)*100 });
+  }
+
+  // 기간 컷
+  const cutoffMap = { '1Y':365,'3Y':1095,'5Y':1825,'ALL':99999 };
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - (cutoffMap[period]||1095));
+  const cutoffStr = cutoff.toISOString().slice(0,10);
+  const vix = (_vixFullHistory || []).filter(d => d.date >= cutoffStr);
+  const rvF = rv.filter(d => d.date >= cutoffStr);
+  if (vix.length < 2 || rvF.length < 2) return;
+
+  const allV = [...vix.map(d=>d.value), ...rvF.map(d=>d.value)];
+  const vMin = Math.max(0, Math.min(...allV)*0.9), vMax = Math.max(...allV)*1.05;
+  const allDates = [...vix.map(d=>d.date), ...rvF.map(d=>d.date)].sort();
+  const firstMs = new Date(allDates[0]).getTime(), lastMs = new Date(allDates[allDates.length-1]).getTime();
+  const totalMs = lastMs - firstMs || 1;
+  const xOf = d => pad.left + ((new Date(d).getTime()-firstMs)/totalMs)*(W-pad.left-pad.right);
+  const yOf = v => pad.top + (1-(v-vMin)/(vMax-vMin))*(H-pad.top-pad.bottom);
+
+  ctx.fillStyle = '#1a1d27'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle = '#2a2d3a'; ctx.lineWidth = 0.5;
+  for (let i=0;i<=5;i++){ const v=vMin+(vMax-vMin)*(i/5); const y=yOf(v);
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(W-pad.right,y); ctx.stroke();
+    ctx.fillStyle='#9ca3af'; ctx.font='10px sans-serif'; ctx.textAlign='right'; ctx.fillText(v.toFixed(0), pad.left-4, y+3); }
+  ctx.fillStyle='#9ca3af'; ctx.font='10px sans-serif'; ctx.textAlign='center';
+  for (let i=0;i<=6;i++){ const idx=Math.round(i/6*(allDates.length-1)); ctx.fillText(allDates[idx].slice(0,7), xOf(allDates[idx]), H-6); }
+
+  // 실현변동성 (회색) → VIX (시안) 순서로 (VIX가 위에 보이게)
+  ctx.beginPath(); ctx.strokeStyle='#fbbf24'; ctx.lineWidth=1.8;
+  rvF.forEach((d,i)=>{ const x=xOf(d.date),y=yOf(d.value); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }); ctx.stroke();
+  ctx.beginPath(); ctx.strokeStyle='#22d3ee'; ctx.lineWidth=1.8;
+  vix.forEach((d,i)=>{ const x=xOf(d.date),y=yOf(d.value); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }); ctx.stroke();
+
+  // 범례 + 현재 프리미엄
+  const lastVix = vix[vix.length-1].value, lastRv = rvF[rvF.length-1].value;
+  ctx.textAlign='left'; ctx.font='bold 11px sans-serif';
+  ctx.fillStyle='#22d3ee'; ctx.fillRect(pad.left,9,12,3); ctx.fillStyle='#e2e8f0'; ctx.fillText('VIX(기대) '+lastVix.toFixed(1), pad.left+15, 17);
+  ctx.fillStyle='#fbbf24'; ctx.fillRect(pad.left+140,9,12,3); ctx.fillStyle='#e2e8f0'; ctx.fillText('SPX 실현변동성 '+lastRv.toFixed(1), pad.left+155, 17);
+  const prem = lastVix - lastRv;
+  ctx.textAlign='right'; ctx.font='10px sans-serif'; ctx.fillStyle = prem>=0?'#34d399':'#f87171';
+  ctx.fillText('프리미엄 ' + (prem>=0?'+':'') + prem.toFixed(1) + 'p', W-pad.right, 17);
+}
+window.drawVixRvChart = drawVixRvChart;
 
 // === Tab switching ===
 function switchTab(tab) {
