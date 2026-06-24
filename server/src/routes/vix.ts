@@ -1,10 +1,40 @@
 import { Router } from 'express';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import https from 'https';
 import { getChart } from '../yahooApi.js';
 
 const router = Router();
 const CSV_PATH = join(process.cwd(), '..', 'data', 'vix_history.csv');
+
+// Yahoo 일별 시계열 (명시적 period1 — range='max'보다 옛 데이터까지 일별 제공)
+function fetchYahooDaily(symbol: string): Promise<{ time: string; close: number }[]> {
+  const p1 = Math.floor(new Date('1985-01-01').getTime() / 1000);
+  const p2 = Math.floor(Date.now() / 1000);
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&period1=${p1}&period2=${p2}`;
+  return new Promise((resolve) => {
+    const req = https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, res => {
+      const chunks: Buffer[] = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => {
+        try {
+          const j = JSON.parse(Buffer.concat(chunks).toString());
+          const r = j.chart?.result?.[0];
+          if (!r) return resolve([]);
+          const ts: number[] = r.timestamp || [];
+          const cl: (number | null)[] = r.indicators?.quote?.[0]?.close || [];
+          const out: { time: string; close: number }[] = [];
+          for (let i = 0; i < ts.length; i++) {
+            if (cl[i] != null && !isNaN(cl[i] as number)) out.push({ time: new Date(ts[i] * 1000).toISOString().slice(0, 10), close: cl[i] as number });
+          }
+          resolve(out);
+        } catch { resolve([]); }
+      });
+    });
+    req.on('error', () => resolve([]));
+    req.setTimeout(20000, () => { req.destroy(); resolve([]); });
+  });
+}
 
 // ── CSV 읽기/쓰기 ──────────────────────────────────────────────
 interface VixRow { date: string; vix: number; spx: number | null; spxReturn: number | null; }
@@ -260,21 +290,14 @@ router.get('/', async (_req, res) => {
     if (_vixCache && Date.now() - _vixCache.ts < VIX_CACHE_TTL) {
       return res.json(_vixCache.data);
     }
-    // 1. Yahoo Finance에서 VIX + SPX 최대 히스토리 가져오기
-    // Yahoo Finance에서 최대 범위로 가져오기 (여러 range 시도)
-    let vixChart: any[] = [];
-    let spxChart: any[] = [];
-    for (const range of ['max', '20y', '10y', '5y']) {
-      try {
-        const [v, s] = await Promise.all([
-          getChart('^VIX', range, '1d'),
-          getChart('^GSPC', range, '1d'),
-        ]);
-        if (v.length > vixChart.length) vixChart = v;
-        if (s.length > spxChart.length) spxChart = s;
-        if (vixChart.length > 2000) break;
-      } catch { continue; }
-    }
+    // 1. Yahoo Finance에서 VIX + SPX 일별 전체 히스토리 (1990~, 명시적 period1)
+    let [vixChart, spxChart] = await Promise.all([
+      fetchYahooDaily('^VIX'),
+      fetchYahooDaily('^GSPC'),
+    ]);
+    // 폴백: 직접 fetch 실패 시 기존 getChart 사용
+    if (vixChart.length < 100) { try { vixChart = await getChart('^VIX', 'max', '1d'); } catch {} }
+    if (spxChart.length < 100) { try { spxChart = await getChart('^GSPC', 'max', '1d'); } catch {} }
 
     // 2. SPX를 날짜 맵으로
     const spxMap = new Map<string, { close: number; ret: number | null }>();
