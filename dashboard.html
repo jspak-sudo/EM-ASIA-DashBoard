@@ -4117,7 +4117,7 @@ function renderSoxVol(data) {
       </div>
     </div>
     <canvas id="soxVolChart" height="300"></canvas>
-    <p class="text-[10px] text-gray-500 mt-2">▪ 두 선이 벌어지면: 기대(^VXN) ＜ 실제 → 시장이 변동성을 과소평가 / 기대 ＞ 실제 → 과대 우려</p>
+    <p class="text-[10px] text-gray-500 mt-2">▪ 두 선이 벌어지면: 기대(^VXN) ＜ 실제 → 시장이 변동성을 과소평가 / 기대 ＞ 실제 → 과대 우려 · <span style="color:#e879f9">^SOX 지수(우축)</span> = 변동성 급등 시 지수 급락 확인</p>
   </div>
 
   <div class="card p-3 mb-4 text-xs text-gray-300 space-y-1.5">
@@ -4147,7 +4147,7 @@ function drawSoxVolChart(period) {
   canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
   const ctx = canvas.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);                 // 논리좌표(W,H)로 그리되 물리픽셀 해상도
-  const pad = { top: 28, right: 16, bottom: 30, left: 40 };
+  const pad = { top: 28, right: 52, bottom: 30, left: 40 };   // 우축(SOX) 공간 확보
 
   const cutoffMap = { '1Y':365, '3Y':1095, '5Y':1825, 'ALL':99999 };
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - (cutoffMap[period]||1095));
@@ -4159,26 +4159,38 @@ function drawSoxVolChart(period) {
     { key:'vix',   data: (_soxVolData.vix?.series||[]).filter(d=>d.date>=cutoffStr),   color:'#94a3b8', label:'^VIX 참고' },
   ].filter(l => l.data.length > 1);
   if (!lines.length) return;
+  // SOX 지수 (우축)
+  const soxData = (_soxVolData.sox?.series||[]).filter(d=>d.date>=cutoffStr);
 
   const allV = lines.flatMap(l => l.data.map(d=>d.value));
   const vMin = Math.max(0, Math.min(...allV)*0.9), vMax = Math.max(...allV)*1.05;
+  const soxMin = soxData.length ? Math.min(...soxData.map(d=>d.value))*0.95 : 0;
+  const soxMax = soxData.length ? Math.max(...soxData.map(d=>d.value))*1.05 : 1;
   const allDates = [...new Set(lines.flatMap(l=>l.data.map(d=>d.date)))].sort();
   const firstMs = new Date(allDates[0]).getTime(), lastMs = new Date(allDates[allDates.length-1]).getTime();
   const totalMs = lastMs - firstMs || 1;
   const xOf = d => pad.left + ((new Date(d).getTime()-firstMs)/totalMs)*(W-pad.left-pad.right);
-  const yOf = v => pad.top + (1-(v-vMin)/(vMax-vMin))*(H-pad.top-pad.bottom);
+  const yOf = v => pad.top + (1-(v-vMin)/(vMax-vMin))*(H-pad.top-pad.bottom);      // 좌축(변동성)
+  const yR  = v => pad.top + (1-(v-soxMin)/(soxMax-soxMin))*(H-pad.top-pad.bottom); // 우축(SOX)
 
   ctx.fillStyle = '#1a1d27'; ctx.fillRect(0,0,W,H);
   try { drawRecessionShading(ctx, pad, H-pad.top-pad.bottom, W-pad.left-pad.right, firstMs, lastMs, xOf); } catch {}
-  // 격자
+  // 좌축 격자·라벨 (변동성 %)
   ctx.strokeStyle = '#2a2d3a'; ctx.lineWidth = 0.5;
   for (let i=0;i<=5;i++){ const v=vMin+(vMax-vMin)*(i/5); const y=yOf(v);
     ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(W-pad.right,y); ctx.stroke();
     ctx.fillStyle='#9ca3af'; ctx.font='10px sans-serif'; ctx.textAlign='right'; ctx.fillText(v.toFixed(0), pad.left-4, y+3); }
+  // 우축 라벨 (SOX 지수)
+  if (soxData.length) { ctx.textAlign='left';
+    for (let i=0;i<=5;i++){ const v=soxMin+(soxMax-soxMin)*(i/5);
+      ctx.fillStyle='#e879f9'; ctx.font='10px sans-serif'; ctx.fillText(Math.round(v).toLocaleString(), W-pad.right+4, yR(v)+3); } }
   // X
   ctx.fillStyle='#9ca3af'; ctx.font='10px sans-serif'; ctx.textAlign='center';
   for (let i=0;i<=6;i++){ const idx=Math.round(i/6*(allDates.length-1)); ctx.fillText(allDates[idx].slice(0,7), xOf(allDates[idx]), H-6); }
-  // 선
+  // SOX 지수 선 (우축, 자홍) — 변동성 선보다 먼저(뒤에) 그림
+  if (soxData.length) { ctx.beginPath(); ctx.strokeStyle='#e879f9'; ctx.lineWidth=1.6;
+    soxData.forEach((d,i)=>{ const x=xOf(d.date), y=yR(d.value); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }); ctx.stroke(); }
+  // 변동성 선
   lines.forEach(l => {
     ctx.beginPath(); ctx.strokeStyle=l.color; ctx.lineWidth = l.key==='vix'?1.2:2;
     l.data.forEach((d,i)=>{ const x=xOf(d.date), y=yOf(d.value); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }); ctx.stroke();
@@ -4187,14 +4199,17 @@ function drawSoxVolChart(period) {
   ctx.textAlign='left'; ctx.font='bold 11px sans-serif'; let lx = pad.left;
   lines.forEach(l => { const last=l.data[l.data.length-1];
     ctx.fillStyle=l.color; ctx.fillRect(lx,10,12,3);
-    ctx.fillStyle='#e2e8f0'; const t=l.label+' '+last.value.toFixed(1); ctx.fillText(t, lx+15, 18); lx += ctx.measureText(t).width + 38; });
+    ctx.fillStyle='#e2e8f0'; const t=l.label+' '+last.value.toFixed(1); ctx.fillText(t, lx+15, 18); lx += ctx.measureText(t).width + 30; });
+  if (soxData.length) { const lastS=soxData[soxData.length-1];
+    ctx.fillStyle='#e879f9'; ctx.fillRect(lx,10,12,3);
+    ctx.fillStyle='#e2e8f0'; ctx.fillText('^SOX(우) '+Math.round(lastS.value).toLocaleString(), lx+15, 18); }
 
   // ── 호버 툴팁 (crosshair) ──────────────────────────────
   let tip = document.getElementById('soxVolTooltip');
   if (!tip) { tip=document.createElement('div'); tip.id='soxVolTooltip'; tip.className='fixed bg-gray-900/95 border border-gray-600 text-[11px] text-white px-3 py-2 rounded pointer-events-none z-50 hidden leading-relaxed'; document.body.appendChild(tip); }
   // 각 선을 날짜맵으로 (근접값 조회)
   const maps = lines.map(l => ({ ...l, map: new Map(l.data.map(d=>[d.date, d.value])) }));
-  const redraw = () => drawSoxVolChart(window._soxVolPeriod || period);  // 크로스헤어 제거용 재사용 X (아래 오버레이만 지움)
+  const soxMap = new Map(soxData.map(d=>[d.date, d.value]));
   if (canvas._svMove) canvas.removeEventListener('mousemove', canvas._svMove);
   if (canvas._svLeave) canvas.removeEventListener('mouseleave', canvas._svLeave);
   canvas._svMove = ev => {
@@ -4212,6 +4227,7 @@ function drawSoxVolChart(period) {
     ctx.beginPath(); ctx.moveTo(cx, pad.top); ctx.lineTo(cx, H-pad.bottom); ctx.stroke(); ctx.setLineDash([]);
     let rows = '<b>'+date+'</b>';
     maps.forEach(l => { const v=l.map.get(date); if(v!=null){ ctx.fillStyle=l.color; ctx.beginPath(); ctx.arc(cx, yOf(v), 3, 0, 7); ctx.fill(); rows += '<br><span style="color:'+l.color+'">'+l.label.replace(' 기대변동성','').replace(' 실현변동성',' RV').replace(' 참고','')+':</span> '+v.toFixed(1); } });
+    const sv = soxMap.get(date); if (sv!=null){ ctx.fillStyle='#e879f9'; ctx.beginPath(); ctx.arc(cx, yR(sv), 3, 0, 7); ctx.fill(); rows += '<br><span style="color:#e879f9">^SOX:</span> '+Math.round(sv).toLocaleString(); }
     tip.innerHTML = rows;
     tip.classList.remove('hidden');
     tip.style.left = (ev.clientX+15+180>window.innerWidth?ev.clientX-195:ev.clientX+15)+'px';
@@ -4221,7 +4237,7 @@ function drawSoxVolChart(period) {
   canvas.addEventListener('mousemove', canvas._svMove);
   canvas.addEventListener('mouseleave', canvas._svLeave);
 
-  // 크로스헤어용: 기본 차트만 다시 그리는 내부 함수 (선·격자·범례)
+  // 크로스헤어용: 기본 차트만 다시 그리는 내부 함수 (선·격자·범례·우축 SOX)
   function drawSoxVolBase() {
     ctx.fillStyle = '#1a1d27'; ctx.fillRect(0,0,W,H);
     try { drawRecessionShading(ctx, pad, H-pad.top-pad.bottom, W-pad.left-pad.right, firstMs, lastMs, xOf); } catch {}
@@ -4229,13 +4245,19 @@ function drawSoxVolChart(period) {
     for (let i=0;i<=5;i++){ const v=vMin+(vMax-vMin)*(i/5); const y=yOf(v);
       ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(W-pad.right,y); ctx.stroke();
       ctx.fillStyle='#9ca3af'; ctx.font='10px sans-serif'; ctx.textAlign='right'; ctx.fillText(v.toFixed(0), pad.left-4, y+3); }
+    if (soxData.length) { ctx.textAlign='left';
+      for (let i=0;i<=5;i++){ const v=soxMin+(soxMax-soxMin)*(i/5); ctx.fillStyle='#e879f9'; ctx.font='10px sans-serif'; ctx.fillText(Math.round(v).toLocaleString(), W-pad.right+4, yR(v)+3); } }
     ctx.fillStyle='#9ca3af'; ctx.font='10px sans-serif'; ctx.textAlign='center';
     for (let i=0;i<=6;i++){ const idx2=Math.round(i/6*(allDates.length-1)); ctx.fillText(allDates[idx2].slice(0,7), xOf(allDates[idx2]), H-6); }
+    if (soxData.length) { ctx.beginPath(); ctx.strokeStyle='#e879f9'; ctx.lineWidth=1.6;
+      soxData.forEach((d,i)=>{ const x=xOf(d.date), y=yR(d.value); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }); ctx.stroke(); }
     lines.forEach(l => { ctx.beginPath(); ctx.strokeStyle=l.color; ctx.lineWidth = l.key==='vix'?1.2:2;
       l.data.forEach((d,i)=>{ const x=xOf(d.date), y=yOf(d.value); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }); ctx.stroke(); });
     ctx.textAlign='left'; ctx.font='bold 11px sans-serif'; let lx2 = pad.left;
     lines.forEach(l => { const last=l.data[l.data.length-1]; ctx.fillStyle=l.color; ctx.fillRect(lx2,10,12,3);
-      ctx.fillStyle='#e2e8f0'; const t=l.label+' '+last.value.toFixed(1); ctx.fillText(t, lx2+15, 18); lx2 += ctx.measureText(t).width + 38; });
+      ctx.fillStyle='#e2e8f0'; const t=l.label+' '+last.value.toFixed(1); ctx.fillText(t, lx2+15, 18); lx2 += ctx.measureText(t).width + 30; });
+    if (soxData.length) { const lastS=soxData[soxData.length-1]; ctx.fillStyle='#e879f9'; ctx.fillRect(lx2,10,12,3);
+      ctx.fillStyle='#e2e8f0'; ctx.fillText('^SOX(우) '+Math.round(lastS.value).toLocaleString(), lx2+15, 18); }
   }
 }
 window.drawSoxVolChart = drawSoxVolChart;
