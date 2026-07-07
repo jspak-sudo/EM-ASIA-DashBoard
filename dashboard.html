@@ -199,13 +199,6 @@ let currentTab = (() => {
 })();
 let _overviewCache = null; // ? ?? 
 
-function fxDateFix(dateStr) {
-  // FX API dates are shifted -1 day (UTC vs Asia), add 1 day
-  if (!dateStr) return '-';
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + 1);
-  return (d.getMonth()+1).toString().padStart(2,'0') + '-' + d.getDate().toString().padStart(2,'0');
-}
 function fmt(n, d=2) { return n.toLocaleString('en-US', {minimumFractionDigits:d, maximumFractionDigits:d}); }
 function fmtPrice(n, isFx) {
   if (!isFx) return fmt(n);
