@@ -3,6 +3,7 @@ import https from 'https';
 import iconv from 'iconv-lite';
 import crypto from 'crypto';
 import { fetchTimeEtfHoldings, TIME_ETF_MAP } from './timeEtf.js';
+import { getKrFundNavs, getKrFundReturns, searchKrFundsByName } from '../kofiaFund.js';
 
 // USD millions → KRW 억 원 (고정 환율 1400원 기준, STATIC_CAP_KRW와 일관)
 // Morningstar 캐시에서 이미 KRW 억원으로 정규화됨 (변환 불필요)
@@ -205,7 +206,7 @@ const ETF_RULES: Record<string, RegExp> = {
   semi:         /반도체|semiconductor|SOX|HBM|AI.*칩|팹리스/i,
   battery:      /2차전지|배터리|battery|이차전지|리튬/i,
   kculture:     /K컬처|K-컬처|한류|KPOP|K-POP|엔터테인먼트|엔터(?!프)|화장품|뷰티|K-뷰티|게임|게임즈|미디어|콘텐츠|컨텐츠|웹툰|소비|유통|리테일|명품|럭셔리|음식료|여행|레저|골프|K.?푸드|내수주|e커머스|이커머스|저작권/i,
-  auto:         /자동차|전기차|모빌리티|mobility|로보택시|robotaxi|automotive|자율주행/i,
+  auto:         /자동차|전기차|모빌리티|mobility|로보택시|robotaxi|automotive|자율주행|스마트카/i,
   bio:          /바이오|헬스케어|제약|헬스|메디컬|medical|치매|뇌질환|바이오시밀러|비만치료제|비만산업|빅파마|의료기기|의료AI|시니어|bio|health/i,
   // 전력인프라 먼저 — "AI전력인프라"는 power_infra로
   // 수소(?!비): "필수소비재"·"내수소비" 오탐 방지
@@ -1797,6 +1798,59 @@ router.get('/search', async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     console.error('Fund search error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/funds/kr-fund/search?q= ─────────────────────────────────────────
+// 국내 공모펀드 검색 — KOFIA 전체 디렉토리(2.6만개) 이름검색, 최대 30개.
+// 디렉토리 미구축(콜드)이면 네이버 자동완성(10개)로 폴백 + 백그라운드 구축.
+const KR_FUND_SEARCH_LIMIT = 30;
+async function naverFundSearch(q: string) {
+  const url = `https://ac.stock.naver.com/ac?q=${encodeURIComponent(q)}&target=fund`;
+  const resp = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://m.stock.naver.com/' } });
+  const data: any = await resp.json();
+  return (data.items || [])
+    .filter((it: any) => it.category === 'fund' || it.typeCode === 'fund')
+    .map((it: any) => ({ code: it.code, name: it.name, type: '', mgr: '' }));
+}
+router.get('/kr-fund/search', async (req: Request, res: Response) => {
+  try {
+    const q = (req.query.q as string || '').trim();
+    if (!q) return res.json({ results: [] });
+    let results = await searchKrFundsByName(q, KR_FUND_SEARCH_LIMIT);
+    if (!results.length) results = (await naverFundSearch(q)).slice(0, KR_FUND_SEARCH_LIMIT); // 폴백
+    res.json({ results });
+  } catch (err: any) {
+    console.error('KR fund search error:', err.message);
+    try { res.json({ results: (await naverFundSearch((req.query.q as string) || '')).slice(0, 30) }); }
+    catch { res.status(500).json({ error: err.message }); }
+  }
+});
+
+// ── GET /api/funds/kr-fund/nav?codes=K55..,K56..&date=YYYYMMDD ────────────────
+// 역내 공모펀드 기준가(NAV) — KOFIA 전자공시(협회코드=네이버 code)
+router.get('/kr-fund/nav', async (req: Request, res: Response) => {
+  try {
+    const codes = ((req.query.codes as string) || '').split(',').map(c => c.trim()).filter(Boolean).slice(0, 300);
+    const date = (req.query.date as string || '').replace(/[^0-9]/g, '') || undefined;
+    if (!codes.length) return res.json({});
+    res.json(await getKrFundNavs(codes, date));
+  } catch (err: any) {
+    console.error('KR fund NAV error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/funds/kr-fund/returns?codes=K55..,K56.. ─────────────────────────
+// 역내 공모펀드 기간수익률 (공유 앵커일 NAV 비교; 첫 조회는 앵커 백필로 수 분 소요, 이후 캐시)
+router.get('/kr-fund/returns', async (req: Request, res: Response) => {
+  try {
+    const codes = ((req.query.codes as string) || '').split(',').map(c => c.trim()).filter(Boolean).slice(0, 300);
+    if (!codes.length) return res.json({});
+    res.json(await getKrFundReturns(codes));
+  } catch (err: any) {
+    console.error('KR fund returns error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
